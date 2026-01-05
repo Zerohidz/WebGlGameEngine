@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 Bugünkü İlerleme (4/15 Commit Tamamlandı)
+## 📊 Bugünkü İlerleme (5.5/15 Commit Tamamlandı)
 
 ### ✅ Tamamlanan Commitler
 
@@ -79,17 +79,45 @@
 
 ---
 
-## 🎯 Kalan İş (11/15 Commit)
+#### Commit 5: Blinn-Phong Shaders (Ambient + Diffuse) ✅
+**Dosyalar:**
+- `src/lighting/Light.ts` - Base class for all lights
+- `src/lighting/DirectionalLight.ts` - Directional light implementation
+- `src/shaders/phong.ts` - Blinn-Phong vertex/fragment shaders
+- `src/engine/Transform.ts` güncellendi - Normal matrix calculation
+- `src/engine/Shader.ts` güncellendi - mat3 and vec3 uniform support
+- `src/main.ts` güncellendi - Lighting integration
 
-### Bugün/Yarın (Gün 2) - Hedef: Commit 5-12
+**Sonuç:**
+- ✅ Light base class + DirectionalLight sistemi
+- ✅ Blinn-Phong shaders (ambient + diffuse components)
+- ✅ Normal matrix transformation (transpose(inverse(model)))
+- ✅ Directional light with color, intensity, direction
+- ✅ Real-time lighting calculations
+- ✅ Ambient prevents pure black, diffuse creates depth
 
-#### Commit 5: Blinn-Phong Shaders (Ambient + Diffuse)
-- `src/shaders/phong.vert.glsl`
-- `src/shaders/phong.frag.glsl`
-- `src/lighting/Light.ts`
-- `src/lighting/DirectionalLight.ts`
+---
 
-#### Commit 6: Specular Lighting & Point Light
+#### Commit 5.5: UI Controls with lil-gui ✅
+**Dosyalar:**
+- `src/ui/SceneControls.ts` - lil-gui control panel
+- `src/main.ts` güncellendi - UI integration
+
+**Sonuç:**
+- ✅ Interactive control panel (sağ üstte)
+- ✅ **Lighting controls**: ambient strength, light direction (X/Y/Z), color picker, intensity
+- ✅ **Camera controls**: FOV, distance
+- ✅ **Animation controls**: speed, auto-rotate toggle, rotation speeds
+- ✅ Real-time parameter updates
+- ✅ Organized folders (Lighting, Camera, Animation)
+
+---
+
+## 🎯 Kalan İş (9.5/15 Commit)
+
+### Bugün/Yarın (Gün 2) - Hedef: Commit 6-12
+
+#### Commit 6: Specular Lighting & Point Light (+ UI controls)
 - Point light + attenuation
 - Blinn-Phong halfway vector
 
@@ -323,12 +351,35 @@ if (vao === null) throw new Error(...);
 
 ---
 
+### 13. lil-gui for Real-time Parameter Tweaking
+
+**Kullanım:** Interactive UI controls for runtime parameter adjustment
+
+**Implementation:**
+```typescript
+const gui = new GUI({ title: 'Scene Controls' });
+const folder = gui.addFolder('Lighting');
+folder.add(params, 'ambientStrength', 0.0, 1.0, 0.01)
+  .name('Ambient Strength')
+  .onChange(() => updateScene());
+```
+
+**Avantajlar:**
+- Real-time tweaking - Testing çok kolay
+- Color picker, sliders, dropdowns builtin
+- Folder organization - Kategorize kontroller
+- onChange callback - Anında görüntü güncelleme
+
+**Ders:** UI controls erken eklemek development hızını çok artırıyor. Lighting parametrelerini slider'la değiştirmek debug için çok değerli.
+
+---
+
 ## ⚠️ Dikkat Edilmesi Gerekenler
 
 ### Zaman Yönetimi
-- **Şu an:** 4/15 commit (27% tamamlandı)
-- **Kalan süre:** ~2 gün
-- **Hedef:** Bugün/yarın 8 commit, son gün 3 commit + bonus
+- **Şu an:** 5.5/15 commit (37% tamamlandı)
+- **Kalan süre:** ~1.5 gün
+- **Hedef:** Bugün/yarın 6-7 commit, son gün bonus features
 
 ### Kritik Öncelikler
 1. **Core features önce** - Bonus'lar opsiyonel
@@ -350,28 +401,27 @@ if (vao === null) throw new Error(...);
 3. ✅ Terminal'de `git log --oneline` - Son commit kontrol
 4. ✅ `task.md` aç - Nereden devam edeceğini gör
 
-### Commit 5 Hazırlıkları
-**Blinn-Phong Shaders (Ambient + Diffuse)** için gerekli:
-- [ ] `phong.vert.glsl` ve `phong.frag.glsl` shader'ları
-- [ ] Normal transformation (model matrix → normal matrix)
-- [ ] `Light.ts` base class
-- [ ] `DirectionalLight.ts` implementation
-- [ ] Ambient + Diffuse lighting hesaplaması
-- [ ] Shader'da uniform'lar (light direction, colors)
+### Commit 6 Hazırlıkları
+**Specular Lighting & Point Light** için gerekli:
+- [ ] Specular component shader'a ekleme (Blinn-Phong halfway vector)
+- [ ] `PointLight.ts` - Point light with attenuation
+- [ ] Shader'da multiple light support (directional + point)
+- [ ] UI'a specular strength slider ekleme
+- [ ] UI'a point light controls ekleme (position, color, range)
 
 **Test Planı:**
-- Cube'un lighting'le render edilmesi
-- Yüzlerin ışığa göre farklı parlaklıkta olması
-- Normal vector'ların doğru transform edilmesi
+- Specular highlights görünmeli (parlak noktalar)
+- Point light objenin yakınında parlak, uzakta sönmüş
+- Attenuation formülü doğru çalışmalı
 
 ---
 
 ## 📈 İlerleme Grafiği
 
 ```
-Gün 1 (Bugün)     [████░░░░░░░░░░░] 27% (4/15 commit)
-Gün 2 (Bugün/Yarın) [░░░░░░░░░░░░░░░] Hedef: 80% (12/15)
-Gün 3 (Son Gün)   [░░░░░░░░░░░░░░░] Hedef: 100% + Bonus
+Gün 1 (Bugün)     [█████░░░░░░░░░░] 37% (5.5/15 commit)
+Gün 2 (Yarın)    [░░░░░░░░░░░░░░░] Hedef: 80% (12/15)
+Gün 3 (Son Gün)  [░░░░░░░░░░░░░░░] Hedef: 100% + Bonus
 ```
 
 ---
@@ -383,10 +433,12 @@ Gün 3 (Son Gün)   [░░░░░░░░░░░░░░░] Hedef: 100% 
 - ✅ WebGL pipeline çalışıyor
 - ✅ Camera sistemi implement edildi
 - ✅ Geometry sistemi tamamlandı (Cube rendering)
+- ✅ Blinn-Phong lighting (ambient + diffuse)
+- ✅ Interactive UI controls (lil-gui)
 - ✅ Type-safe kod yazılıyor
 - ✅ Her commit test edildi ve geçti
 
-**Momentum:** İlk 4 commit sorunsuz tamamlandı. Geometry foundation hazır. Şimdi lighting system'e geçiyoruz!
+**Momentum:** 5.5 commit tamamlandı! Lighting + UI sistemi hazır. Specular ve point light'a geçiyoruz!
 
 ---
 
