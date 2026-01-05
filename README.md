@@ -54,6 +54,12 @@ src/
 
 See [IMPLEMENTATION_PLAN.md](.gemini/antigravity/brain/.../implementation_plan.md) for detailed commit-by-commit breakdown.
 
+## Progress Tracking
+
+See [PROGRESS.md](PROGRESS.md) for current status, completed commits, and lessons learned.
+
+**Current Status:** 3/15 commits completed (Commit 1-3: Setup, Shaders, Camera)
+
 ## Academic Integrity
 
 All code is original work. No high-level 3D libraries (Three.js, Babylon.js, A-Frame) are used.
