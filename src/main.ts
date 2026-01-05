@@ -8,6 +8,7 @@ import { Mesh } from './geometry/Mesh';
 import { Cube } from './geometry/Cube';
 import { DirectionalLight } from './lighting/DirectionalLight';
 import { phongVertexShader, phongFragmentShader } from './shaders/phong';
+import { SceneControls } from './ui/SceneControls';
 
 console.log('WebGL2 Game Engine - Starting...');
 
@@ -67,15 +68,66 @@ cubeTransform.setPosition(0, 0, 0);
 const cubeMesh = new Mesh(cubeGeometry, cubeTransform);
 console.log('Cube mesh created');
 
+// Create UI controls
+const controls = new SceneControls({
+  lighting: {
+    ambientStrength: 0.2,
+    direction: { x: 0, y: -1, z: -1 },
+    color: '#ffffff',
+    intensity: 1.0,
+  },
+  camera: {
+    fov: 75,
+    distance: 5,
+  },
+  animation: {
+    speed: 1.0,
+    autoRotate: true,
+    rotationSpeedX: 30,
+    rotationSpeedY: 50,
+  },
+});
+
+// Update scene when controls change
+controls.onChange(() => {
+  // Update light direction
+  light.setDirection(
+    controls.params.lighting.direction.x,
+    controls.params.lighting.direction.y,
+    controls.params.lighting.direction.z
+  );
+
+  // Update light color from hex
+  const hex = controls.params.lighting.color.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+  vec3.set(light.color, r, g, b);
+  light.intensity = controls.params.lighting.intensity;
+
+  // Update camera
+  camera.setFOV(controls.params.camera.fov);
+  camera.setPosition(0, 0, controls.params.camera.distance);
+});
+
+console.log('UI controls created');
+
 // Animation
 let time = 0;
 
 // Render loop
 function render(): void {
-  time += 0.01;
-
-  // Rotate cube on X and Y axes for better 3D effect
-  cubeTransform.setRotation(time * 30, time * 50, 0);
+  const deltaTime = 0.01 * controls.params.animation.speed;
+  
+  if (controls.params.animation.autoRotate) {
+    time += deltaTime;
+    // Rotate cube on X and Y axes
+    cubeTransform.setRotation(
+      time * controls.params.animation.rotationSpeedX,
+      time * controls.params.animation.rotationSpeedY,
+      0
+    );
+  }
 
   // Clear screen
   renderer.clear();
@@ -100,7 +152,7 @@ function render(): void {
   shader.setVec3Array('u_lightDirection', lightData.direction as Float32Array);
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   shader.setVec3Array('u_lightColor', lightData.color as Float32Array);
-  shader.setFloat('u_ambientStrength', 0.2);
+  shader.setFloat('u_ambientStrength', controls.params.lighting.ambientStrength);
 
   // Render cube
   cubeMesh.render(gl);
