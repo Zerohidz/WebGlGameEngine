@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 Bugünkü İlerleme (5.5/15 Commit Tamamlandı)
+## 📊 Mevcut İlerleme (7/15 Commit Tamamlandı - %47)
 
 ### ✅ Tamamlanan Commitler
 
@@ -113,16 +113,41 @@
 
 ---
 
-## 🎯 Kalan İş (9.5/15 Commit)
+#### Commit 6: Specular Lighting & Point Light ✅
+**Dosyalar:**
+- `src/lighting/PointLight.ts` - Point light with attenuation
+- `src/shaders/phong.ts` - Updated with specular component (Blinn-Phong)
+- `src/ui/SceneControls.ts` - Specular and point light UI controls
+- `src/main.ts` - Point light integration
 
-### Bugün/Yarın (Gün 2) - Hedef: Commit 6-12
+**Sonuç:**
+- ✅ Point light with position-based attenuation
+- ✅ Blinn-Phong specular highlights (halfway vector)
+- ✅ Attenuation formula: 1.0 / (constant + linear * distance + quadratic * distance²)
+- ✅ UI controls: specular strength, shininess, point light position/color/intensity/attenuation
+- ✅ Visual verification: specular highlights visible and respond to light position changes
 
-#### Commit 6: Specular Lighting & Point Light (+ UI controls)
-- Point light + attenuation
-- Blinn-Phong halfway vector
+---
 
-#### Commit 7: Sphere Geometry
-- UV Sphere (latitude/longitude grid)
+#### Commit 7: Sphere Geometry ✅
+**Dosyalar:**
+- `src/geometry/Sphere.ts` - UV Sphere generation (latitude/longitude grid)
+- `src/ui/SceneControls.ts` - Geometry dropdown (Cube/Sphere)
+- `src/main.ts` - Sphere rendering integration
+
+**Sonuç:**
+- ✅ UV Sphere procedural generation (32 segments, 16 rings)
+- ✅ Spherical to Cartesian coordinate conversion
+- ✅ Correct normal calculation for lighting
+- ✅ Top-to-bottom color gradient (magenta to cyan)
+- ✅ UI integration: geometry dropdown switches between Cube and Sphere
+- ✅ Counter-clockwise winding order for proper culling
+
+---
+
+## 🎯 Kalan İş (8/15 Commit)
+
+### Sonraki Hedef: Commit 8-12
 
 #### Commit 8: Cylinder & Prism
 - Procedural cylinder (caps + sides)
@@ -419,9 +444,9 @@ folder.add(params, 'ambientStrength', 0.0, 1.0, 0.01)
 ## 📈 İlerleme Grafiği
 
 ```
-Gün 1 (Bugün)     [█████░░░░░░░░░░] 37% (5.5/15 commit)
-Gün 2 (Yarın)    [░░░░░░░░░░░░░░░] Hedef: 80% (12/15)
-Gün 3 (Son Gün)  [░░░░░░░░░░░░░░░] Hedef: 100% + Bonus
+Gün 1-2           [███████░░░░░░░░] 47% (7/15 commit)
+Gün 2 (Devam)     [░░░░░░░░░░░░░░░] Hedef: 80% (12/15)
+Gün 3 (Son Gün)   [░░░░░░░░░░░░░░░] Hedef: 100% + Bonus
 ```
 
 ---
@@ -432,13 +457,14 @@ Gün 3 (Son Gün)  [░░░░░░░░░░░░░░░] Hedef: 100% +
 - ✅ Proje başarıyla kuruldu
 - ✅ WebGL pipeline çalışıyor
 - ✅ Camera sistemi implement edildi
-- ✅ Geometry sistemi tamamlandı (Cube rendering)
-- ✅ Blinn-Phong lighting (ambient + diffuse)
+- ✅ Geometry sistemi tamamlandı (Cube + Sphere)
+- ✅ Blinn-Phong lighting (ambient + diffuse + specular)
+- ✅ Point light with attenuation
 - ✅ Interactive UI controls (lil-gui)
 - ✅ Type-safe kod yazılıyor
 - ✅ Her commit test edildi ve geçti
 
-**Momentum:** 5.5 commit tamamlandı! Lighting + UI sistemi hazır. Specular ve point light'a geçiyoruz!
+**Momentum:** 7 commit tamamlandı (%47)! Lighting sistemi tam, iki geometri tipi hazır. Cylinder & Prism'e geçiş için hazırız!
 
 ---
 
