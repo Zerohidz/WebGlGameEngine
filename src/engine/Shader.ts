@@ -1,3 +1,4 @@
+import { ReadonlyMat4 } from 'gl-matrix';
 import { compileShader, linkProgram } from '../utils/GLUtils';
 
 /**
@@ -91,7 +92,7 @@ export class Shader {
   /**
    * Set uniform mat4
    */
-  setMat4(name: string, matrix: Float32Array): void {
+  setMat4(name: string, matrix: ReadonlyMat4): void {
     const location = this.getUniformLocation(name);
     if (location) {
       this.gl.uniformMatrix4fv(location, false, matrix);
