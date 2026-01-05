@@ -9,6 +9,16 @@ export interface ControlParams {
     direction: { x: number; y: number; z: number };
     color: string; // hex color
     intensity: number;
+    specularStrength: number;
+    shininess: number;
+    pointLight: {
+      position: { x: number; y: number; z: number };
+      color: string;
+      intensity: number;
+      constant: number;
+      linear: number;
+      quadratic: number;
+    };
   };
   camera: {
     fov: number;
@@ -38,6 +48,68 @@ export class SceneControls {
     this.setupLightingControls();
     this.setupCameraControls();
     this.setupAnimationControls();
+  }
+
+  /**
+   * Setup specular controls (part of lighting)
+   */
+  private setupSpecularControls(lightingFolder: GUI): void {
+    lightingFolder
+      .add(this.params.lighting, 'specularStrength', 0.0, 1.0, 0.01)
+      .name('Specular Strength')
+      .onChange(() => this.triggerChange());
+
+    lightingFolder
+      .add(this.params.lighting, 'shininess', 2, 256, 1)
+      .name('Shininess')
+      .onChange(() => this.triggerChange());
+  }
+
+  /**
+   * Setup point light controls (part of lighting)
+   */
+  private setupPointLightControls(lightingFolder: GUI): void {
+    const pointLightFolder = lightingFolder.addFolder('Point Light');
+
+    const positionFolder = pointLightFolder.addFolder('Position');
+    positionFolder
+      .add(this.params.lighting.pointLight.position, 'x', -10, 10, 0.5)
+      .name('X')
+      .onChange(() => this.triggerChange());
+    positionFolder
+      .add(this.params.lighting.pointLight.position, 'y', -10, 10, 0.5)
+      .name('Y')
+      .onChange(() => this.triggerChange());
+    positionFolder
+      .add(this.params.lighting.pointLight.position, 'z', -10, 10, 0.5)
+      .name('Z')
+      .onChange(() => this.triggerChange());
+
+    pointLightFolder
+      .addColor(this.params.lighting.pointLight, 'color')
+      .name('Color')
+      .onChange(() => this.triggerChange());
+
+    pointLightFolder
+      .add(this.params.lighting.pointLight, 'intensity', 0.0, 3.0, 0.1)
+      .name('Intensity')
+      .onChange(() => this.triggerChange());
+
+    const attenuationFolder = pointLightFolder.addFolder('Attenuation');
+    attenuationFolder
+      .add(this.params.lighting.pointLight, 'constant', 0.0, 2.0, 0.01)
+      .name('Constant')
+      .onChange(() => this.triggerChange());
+    attenuationFolder
+      .add(this.params.lighting.pointLight, 'linear', 0.0, 1.0, 0.01)
+      .name('Linear')
+      .onChange(() => this.triggerChange());
+    attenuationFolder
+      .add(this.params.lighting.pointLight, 'quadratic', 0.0, 1.0, 0.001)
+      .name('Quadratic')
+      .onChange(() => this.triggerChange());
+
+    pointLightFolder.open();
   }
 
   /**
@@ -74,6 +146,12 @@ export class SceneControls {
       .add(this.params.lighting, 'intensity', 0.0, 3.0, 0.1)
       .name('Intensity')
       .onChange(() => this.triggerChange());
+
+    // Add specular controls
+    this.setupSpecularControls(lightingFolder);
+
+    // Add point light controls
+    this.setupPointLightControls(lightingFolder);
 
     lightingFolder.open();
   }

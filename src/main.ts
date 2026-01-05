@@ -7,6 +7,7 @@ import { Transform } from './engine/Transform';
 import { Mesh } from './geometry/Mesh';
 import { Cube } from './geometry/Cube';
 import { DirectionalLight } from './lighting/DirectionalLight';
+import { PointLight } from './lighting/PointLight';
 import { phongVertexShader, phongFragmentShader } from './shaders/phong';
 import { SceneControls } from './ui/SceneControls';
 
@@ -61,6 +62,12 @@ const lightColor = vec3.fromValues(1, 1, 1); // White light
 const light = new DirectionalLight(lightDirection, lightColor, 1.0);
 console.log('Directional light created');
 
+// Create point light
+const pointLightPosition = vec3.fromValues(2, 1, 2);
+const pointLightColor = vec3.fromValues(1, 1, 1); // White light
+const pointLight = new PointLight(pointLightPosition, pointLightColor, 1.0);
+console.log('Point light created');
+
 // Create cube mesh
 const cubeGeometry = Cube.create(gl, 1.0);
 const cubeTransform = new Transform();
@@ -75,6 +82,16 @@ const controls = new SceneControls({
     direction: { x: 0, y: -1, z: -1 },
     color: '#ffffff',
     intensity: 1.0,
+    specularStrength: 0.5,
+    shininess: 32,
+    pointLight: {
+      position: { x: 2, y: 1, z: 2 },
+      color: '#ffffff',
+      intensity: 1.0,
+      constant: 1.0,
+      linear: 0.09,
+      quadratic: 0.032,
+    },
   },
   camera: {
     fov: 75,
@@ -104,6 +121,22 @@ controls.onChange(() => {
   const b = parseInt(hex.substring(4, 6), 16) / 255;
   vec3.set(light.color, r, g, b);
   light.intensity = controls.params.lighting.intensity;
+
+  // Update point light
+  pointLight.setPosition(
+    controls.params.lighting.pointLight.position.x,
+    controls.params.lighting.pointLight.position.y,
+    controls.params.lighting.pointLight.position.z
+  );
+  const pointHex = controls.params.lighting.pointLight.color.replace('#', '');
+  const pointR = parseInt(pointHex.substring(0, 2), 16) / 255;
+  const pointG = parseInt(pointHex.substring(2, 4), 16) / 255;
+  const pointB = parseInt(pointHex.substring(4, 6), 16) / 255;
+  vec3.set(pointLight.color, pointR, pointG, pointB);
+  pointLight.intensity = controls.params.lighting.pointLight.intensity;
+  pointLight.constant = controls.params.lighting.pointLight.constant;
+  pointLight.linear = controls.params.lighting.pointLight.linear;
+  pointLight.quadratic = controls.params.lighting.pointLight.quadratic;
 
   // Update camera
   camera.setFOV(controls.params.camera.fov);
@@ -153,6 +186,22 @@ function render(): void {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   shader.setVec3Array('u_lightColor', lightData.color as Float32Array);
   shader.setFloat('u_ambientStrength', controls.params.lighting.ambientStrength);
+
+  // Set specular uniforms
+  shader.setFloat('u_specularStrength', controls.params.lighting.specularStrength);
+  shader.setFloat('u_shininess', controls.params.lighting.shininess);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  shader.setVec3Array('u_viewPos', camera.position as Float32Array);
+
+  // Set point light uniforms
+  const pointLightData = pointLight.getUniformData();
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  shader.setVec3Array('u_pointLightPos', pointLightData.position as Float32Array);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  shader.setVec3Array('u_pointLightColor', pointLightData.color as Float32Array);
+  shader.setFloat('u_pointLightConstant', pointLightData.constant);
+  shader.setFloat('u_pointLightLinear', pointLightData.linear);
+  shader.setFloat('u_pointLightQuadratic', pointLightData.quadratic);
 
   // Render cube
   cubeMesh.render(gl);
