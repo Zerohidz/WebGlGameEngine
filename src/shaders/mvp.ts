@@ -1,9 +1,10 @@
-// Shader with MVP matrices
+// Shader with MVP matrices and explicit attribute locations
 export const mvpVertexShader = `#version 300 es
 precision highp float;
 
-in vec3 a_position;
-in vec3 a_color;
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_color;
+layout(location = 2) in vec3 a_normal;
 
 uniform mat4 u_model;
 uniform mat4 u_view;

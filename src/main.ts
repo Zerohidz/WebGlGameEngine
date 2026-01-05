@@ -3,6 +3,8 @@ import { WebGLRenderer } from './engine/WebGLRenderer';
 import { Shader } from './engine/Shader';
 import { Camera } from './engine/Camera';
 import { Transform } from './engine/Transform';
+import { Mesh } from './geometry/Mesh';
+import { Cube } from './geometry/Cube';
 import { mvpVertexShader, mvpFragmentShader } from './shaders/mvp';
 
 console.log('WebGL2 Game Engine - Starting...');
@@ -36,7 +38,7 @@ console.log('Renderer initialized');
 
 // Create camera
 const camera = new Camera(75, typedCanvas.width / typedCanvas.height, 0.1, 100);
-camera.setPosition(0, 0, 3);
+camera.setPosition(0, 0, 5);
 camera.setTarget(0, 0, 0);
 console.log('Camera initialized');
 
@@ -50,60 +52,12 @@ window.addEventListener('resize', () => {
 const shader = new Shader(gl, mvpVertexShader, mvpFragmentShader);
 console.log('Shaders compiled and linked');
 
-// Create a simple triangle
-const vertices = new Float32Array([
-  // Position (x, y, z)    Color (r, g, b)
-  0.0, 0.5, 0.0, 1.0, 0.0, 0.0, // Top vertex - Red
-  -0.5, -0.5, 0.0, 0.0, 1.0, 0.0, // Bottom left - Green
-  0.5, -0.5, 0.0, 0.0, 0.0, 1.0, // Bottom right - Blue
-]);
-
-// Create Vertex Array Object (VAO)
-const vao = gl.createVertexArray();
-if (!vao) {
-  throw new Error('Failed to create VAO');
-}
-gl.bindVertexArray(vao);
-
-// Create buffer
-const buffer = gl.createBuffer();
-if (!buffer) {
-  throw new Error('Failed to create buffer');
-}
-gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-// Setup attributes
-const positionLocation = shader.getAttributeLocation('a_position');
-const colorLocation = shader.getAttributeLocation('a_color');
-
-// Position attribute (3 floats)
-gl.enableVertexAttribArray(positionLocation);
-gl.vertexAttribPointer(
-  positionLocation,
-  3,
-  gl.FLOAT,
-  false,
-  6 * Float32Array.BYTES_PER_ELEMENT,
-  0
-);
-
-// Color attribute (3 floats)
-gl.enableVertexAttribArray(colorLocation);
-gl.vertexAttribPointer(
-  colorLocation,
-  3,
-  gl.FLOAT,
-  false,
-  6 * Float32Array.BYTES_PER_ELEMENT,
-  3 * Float32Array.BYTES_PER_ELEMENT
-);
-
-console.log('Triangle geometry created');
-
-// Create transform for the triangle
-const transform = new Transform();
-transform.setPosition(0, 0, 0);
+// Create cube mesh
+const cubeGeometry = Cube.create(gl, 1.0);
+const cubeTransform = new Transform();
+cubeTransform.setPosition(0, 0, 0);
+const cubeMesh = new Mesh(cubeGeometry, cubeTransform);
+console.log('Cube mesh created');
 
 // Animation
 let time = 0;
@@ -111,24 +65,23 @@ let time = 0;
 // Render loop
 function render(): void {
   time += 0.01;
-  
-  // Rotate triangle
-  transform.setRotation(0, time * 50, 0);
-  
+
+  // Rotate cube on X and Y axes for better 3D effect
+  cubeTransform.setRotation(time * 30, time * 50, 0);
+
   // Clear screen
   renderer.clear();
 
   // Use shader
   shader.use();
-  
+
   // Set MVP matrices
-  shader.setMat4('u_model', transform.getModelMatrix());
+  shader.setMat4('u_model', cubeMesh.getModelMatrix());
   shader.setMat4('u_view', camera.getViewMatrix());
   shader.setMat4('u_projection', camera.getProjectionMatrix());
 
-  // Bind VAO and draw
-  gl.bindVertexArray(vao);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  // Render cube
+  cubeMesh.render(gl);
 
   // Request next frame
   requestAnimationFrame(render);

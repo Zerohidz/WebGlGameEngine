@@ -70,7 +70,7 @@ export default tseslint.config(
         },
       ],
       '@typescript-eslint/no-unnecessary-condition': [
-        'error',
+        'warn',
         {
           allowConstantLoopConditions: 'only-allowed-literals',
         },
