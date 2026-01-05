@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 Bugünkü İlerleme (3/15 Commit Tamamlandı)
+## 📊 Bugünkü İlerleme (4/15 Commit Tamamlandı)
 
 ### ✅ Tamamlanan Commitler
 
@@ -60,15 +60,28 @@
 
 ---
 
-## 🎯 Kalan İş (12/15 Commit)
+#### Commit 4: Cube Geometry ✅
+**Dosyalar:**
+- `src/geometry/Geometry.ts` - Base class (VAO/VBO/IBO yönetimi)
+- `src/geometry/Cube.ts` - Procedural cube (6 renkli yüz)
+- `src/geometry/Mesh.ts` - Geometry + Transform birleştirme
+- `src/shaders/mvp.ts` güncellendi - Explicit attribute locations
+- `src/main.ts` güncellendi - Cube rendering
 
-### Yarın (Gün 2) - Hedef: Commit 4-12
+**Sonuç:**
+- ✅ Geometry base class ile VAO/VBO/IBO yönetimi
+- ✅ Interleaved vertex format (position, color, normal)
+- ✅ Procedural cube generation (24 vertices, 36 indices)
+- ✅ 6 farklı renkli yüz (debugging için)
+- ✅ Mesh class ile geometry + transform kombinasyonu
+- ✅ Backface culling doğru çalışıyor
+- ✅ Dual-axis rotation (X ve Y eksenleri)
 
-#### Commit 4: Cube Geometry 🔄 SONRAKI
-- `src/geometry/Geometry.ts` - Base class
-- `src/geometry/Cube.ts` - Procedural cube
-- `src/geometry/Mesh.ts` - Geometry + Material + Transform
-- Test: Rotating cube with lighting
+---
+
+## 🎯 Kalan İş (11/15 Commit)
+
+### Bugün/Yarın (Gün 2) - Hedef: Commit 5-12
 
 #### Commit 5: Blinn-Phong Shaders (Ambient + Diffuse)
 - `src/shaders/phong.vert.glsl`
@@ -235,12 +248,87 @@ function resizeCanvas(): void {
 
 ---
 
+### 9. Interleaved vs Separate Vertex Buffers
+
+**Seçim:** Interleaved vertex format kullandık.
+
+**Format:** `[posX, posY, posZ, colorR, colorG, colorB, normalX, normalY, normalZ, ...]`
+
+**Sebep:** 
+- Daha iyi cache locality - GPU komşu verileri birlikte fetch eder
+- Daha az buffer binding - Tek VBO hepsini içeriyor
+
+**Trade-off:** Updating sadece bir attribute için tüm buffer'ı güncellemek gerekir (bizim case'de sıkıntı değil - static geometry).
+
+---
+
+### 10. Namespace vs Static-Only Class
+
+**Sorun:** ESLint "Unexpected class with only static properties" hatası.
+
+**Hatalı Yaklaşım:**
+```typescript
+export class Cube {
+  static create(gl, size) { ... }
+}
+```
+
+**Doğru Çözüm:**
+```typescript
+export namespace Cube {
+  export function create(gl, size) { ... }
+}
+```
+
+**Ders:** TypeScript namespace pattern ESLint'e uygun, syntax aynı (`Cube.create()`).
+
+---
+
+### 11. Explicit Attribute Locations (GLSL 300 es)
+
+**Önceki Yöntem:**
+```typescript
+const posLoc = shader.getAttributeLocation('a_position');
+gl.vertexAttribPointer(posLoc, ...);
+```
+
+**Yeni Yöntem:**
+```glsl
+layout(location = 0) in vec3 a_position;
+layout(location = 1) in vec3 a_color;
+layout(location = 2) in vec3 a_normal;
+```
+
+**Avantajlar:**
+- Geometry class sabit location'ları biliyor
+- Runtime'da attribute query yok
+- Daha temiz kod
+
+---
+
+### 12. WebGL Type Safety Challenge
+
+**Sorun:** `gl.createVertexArray()`, `gl.createBuffer()` null dönebilir (WebGL spec), ama TypeScript lib types bunu göstermiyor.
+
+**ESLint Hatası:** "Unnecessary conditional, the types have no overlap"
+
+**Çözüm:**
+```typescript
+// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+const vao = gl.createVertexArray();
+if (vao === null) throw new Error(...);
+```
+
+**Ders:** TypeScript lib types her zaman runtime behavior'ı doğru yansıtmayabilir. Documented workaround kullan.
+
+---
+
 ## ⚠️ Dikkat Edilmesi Gerekenler
 
 ### Zaman Yönetimi
-- **Şu an:** 3/15 commit (20% tamamlandı)
-- **Kalan süre:** 2 gün
-- **Hedef:** Yarın 9 commit, son gün 3 commit + bonus
+- **Şu an:** 4/15 commit (27% tamamlandı)
+- **Kalan süre:** ~2 gün
+- **Hedef:** Bugün/yarın 8 commit, son gün 3 commit + bonus
 
 ### Kritik Öncelikler
 1. **Core features önce** - Bonus'lar opsiyonel
@@ -262,27 +350,28 @@ function resizeCanvas(): void {
 3. ✅ Terminal'de `git log --oneline` - Son commit kontrol
 4. ✅ `task.md` aç - Nereden devam edeceğini gör
 
-### Commit 4 Hazırlıkları
-**Cube Geometry** için gerekli:
-- [ ] `Geometry` base class (VAO, VBO, IBO management)
-- [ ] Cube vertex calculation (8 vertices, 36 indices - 12 triangles)
-- [ ] Per-face normals (6 yüz için)
-- [ ] UV coordinates (texture mapping için)
-- [ ] `Mesh` class (Geometry + Transform birleştir)
+### Commit 5 Hazırlıkları
+**Blinn-Phong Shaders (Ambient + Diffuse)** için gerekli:
+- [ ] `phong.vert.glsl` ve `phong.frag.glsl` shader'ları
+- [ ] Normal transformation (model matrix → normal matrix)
+- [ ] `Light.ts` base class
+- [ ] `DirectionalLight.ts` implementation
+- [ ] Ambient + Diffuse lighting hesaplaması
+- [ ] Shader'da uniform'lar (light direction, colors)
 
 **Test Planı:**
-- Rotating cube render edilecek
-- Her face farklı renk olabilir (debugging için)
-- Backface culling testi
+- Cube'un lighting'le render edilmesi
+- Yüzlerin ışığa göre farklı parlaklıkta olması
+- Normal vector'ların doğru transform edilmesi
 
 ---
 
 ## 📈 İlerleme Grafiği
 
 ```
-Gün 1 (Bugün)    [███░░░░░░░░░░░░] 20% (3/15 commit)
-Gün 2 (Yarın)    [░░░░░░░░░░░░░░░] Hedef: 80% (12/15)
-Gün 3 (Son Gün)  [░░░░░░░░░░░░░░░] Hedef: 100% + Bonus
+Gün 1 (Bugün)     [████░░░░░░░░░░░] 27% (4/15 commit)
+Gün 2 (Bugün/Yarın) [░░░░░░░░░░░░░░░] Hedef: 80% (12/15)
+Gün 3 (Son Gün)   [░░░░░░░░░░░░░░░] Hedef: 100% + Bonus
 ```
 
 ---
@@ -293,10 +382,11 @@ Gün 3 (Son Gün)  [░░░░░░░░░░░░░░░] Hedef: 100% +
 - ✅ Proje başarıyla kuruldu
 - ✅ WebGL pipeline çalışıyor
 - ✅ Camera sistemi implement edildi
+- ✅ Geometry sistemi tamamlandı (Cube rendering)
 - ✅ Type-safe kod yazılıyor
 - ✅ Her commit test edildi ve geçti
 
-**Momentum:** İlk 3 commit sorunsuz tamamlandı. Temel altyapı sağlam. Yarın geometri ve lighting'e odaklanacağız!
+**Momentum:** İlk 4 commit sorunsuz tamamlandı. Geometry foundation hazır. Şimdi lighting system'e geçiyoruz!
 
 ---
 
@@ -316,10 +406,14 @@ Gün 3 (Son Gün)  [░░░░░░░░░░░░░░░] Hedef: 100% +
 - Shader (with caching)
 - Camera (Perspective)
 - Transform (MVP matrices)
+- Geometry (VAO/VBO/IBO management)
+- Mesh (Geometry + Transform)
+- Cube (procedural generation)
 
 **Next Up:**
-- Geometry system
 - Lighting (Blinn-Phong)
+- Sphere geometry
+- Cylinder & Prism
 - Texture loading
 - OBJ parser
 
