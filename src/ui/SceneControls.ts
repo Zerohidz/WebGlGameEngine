@@ -30,6 +30,9 @@ export interface ControlParams {
     rotationSpeedX: number;
     rotationSpeedY: number;
   };
+  geometry: {
+    type: string; // 'Cube' or 'Sphere'
+  };
 }
 
 /**
@@ -48,6 +51,7 @@ export class SceneControls {
     this.setupLightingControls();
     this.setupCameraControls();
     this.setupAnimationControls();
+    this.setupGeometryControls();
   }
 
   /**
@@ -202,6 +206,20 @@ export class SceneControls {
       .onChange(() => this.triggerChange());
 
     animationFolder.open();
+  }
+
+  /**
+   * Setup geometry controls folder
+   */
+  private setupGeometryControls(): void {
+    const geometryFolder = this.gui.addFolder('Geometry');
+
+    geometryFolder
+      .add(this.params.geometry, 'type', ['Cube', 'Sphere'])
+      .name('Type')
+      .onChange(() => this.triggerChange());
+
+    geometryFolder.open();
   }
 
   /**

@@ -6,6 +6,7 @@ import { Camera } from './engine/Camera';
 import { Transform } from './engine/Transform';
 import { Mesh } from './geometry/Mesh';
 import { Cube } from './geometry/Cube';
+import { Sphere } from './geometry/Sphere';
 import { DirectionalLight } from './lighting/DirectionalLight';
 import { PointLight } from './lighting/PointLight';
 import { phongVertexShader, phongFragmentShader } from './shaders/phong';
@@ -70,10 +71,12 @@ console.log('Point light created');
 
 // Create cube mesh
 const cubeGeometry = Cube.create(gl, 1.0);
+const sphereGeometry = Sphere.create(gl, 1.0, 32, 16);
+let currentGeometry = cubeGeometry;
 const cubeTransform = new Transform();
 cubeTransform.setPosition(0, 0, 0);
-const cubeMesh = new Mesh(cubeGeometry, cubeTransform);
-console.log('Cube mesh created');
+let mesh = new Mesh(currentGeometry, cubeTransform);
+console.log('Geometries created (Cube and Sphere)');
 
 // Create UI controls
 const controls = new SceneControls({
@@ -102,6 +105,9 @@ const controls = new SceneControls({
     autoRotate: true,
     rotationSpeedX: 30,
     rotationSpeedY: 50,
+  },
+  geometry: {
+    type: 'Cube',
   },
 });
 
@@ -141,6 +147,19 @@ controls.onChange(() => {
   // Update camera
   camera.setFOV(controls.params.camera.fov);
   camera.setPosition(0, 0, controls.params.camera.distance);
+
+  // Update geometry if type changed
+  if (controls.params.geometry.type === 'Cube') {
+    if (currentGeometry !== cubeGeometry) {
+      currentGeometry = cubeGeometry;
+      mesh = new Mesh(currentGeometry, cubeTransform);
+    }
+  } else if (controls.params.geometry.type === 'Sphere') {
+    if (currentGeometry !== sphereGeometry) {
+      currentGeometry = sphereGeometry;
+      mesh = new Mesh(currentGeometry, cubeTransform);
+    }
+  }
 });
 
 console.log('UI controls created');
@@ -154,7 +173,7 @@ function render(): void {
   
   if (controls.params.animation.autoRotate) {
     time += deltaTime;
-    // Rotate cube on X and Y axes
+    // Rotate mesh on X and Y axes
     cubeTransform.setRotation(
       time * controls.params.animation.rotationSpeedX,
       time * controls.params.animation.rotationSpeedY,
@@ -169,7 +188,7 @@ function render(): void {
   shader.use();
 
   // Set MVP matrices
-  shader.setMat4('u_model', cubeMesh.getModelMatrix());
+  shader.setMat4('u_model', mesh.getModelMatrix());
   shader.setMat4('u_view', camera.getViewMatrix());
   shader.setMat4('u_projection', camera.getProjectionMatrix());
   
@@ -203,8 +222,8 @@ function render(): void {
   shader.setFloat('u_pointLightLinear', pointLightData.linear);
   shader.setFloat('u_pointLightQuadratic', pointLightData.quadratic);
 
-  // Render cube
-  cubeMesh.render(gl);
+  // Render mesh
+  mesh.render(gl);
 
   // Request next frame
   requestAnimationFrame(render);
