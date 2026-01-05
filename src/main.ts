@@ -1,3 +1,4 @@
+import { vec3 } from 'gl-matrix';
 import { createWebGL2Context } from './utils/GLUtils';
 import { WebGLRenderer } from './engine/WebGLRenderer';
 import { Shader } from './engine/Shader';
@@ -5,7 +6,8 @@ import { Camera } from './engine/Camera';
 import { Transform } from './engine/Transform';
 import { Mesh } from './geometry/Mesh';
 import { Cube } from './geometry/Cube';
-import { mvpVertexShader, mvpFragmentShader } from './shaders/mvp';
+import { DirectionalLight } from './lighting/DirectionalLight';
+import { phongVertexShader, phongFragmentShader } from './shaders/phong';
 
 console.log('WebGL2 Game Engine - Starting...');
 
@@ -48,9 +50,15 @@ window.addEventListener('resize', () => {
   camera.setAspect(typedCanvas.width / typedCanvas.height);
 });
 
-// Create shader with MVP matrices
-const shader = new Shader(gl, mvpVertexShader, mvpFragmentShader);
-console.log('Shaders compiled and linked');
+// Create Blinn-Phong shader
+const shader = new Shader(gl, phongVertexShader, phongFragmentShader);
+console.log('Phong shaders compiled and linked');
+
+// Create directional light
+const lightDirection = vec3.fromValues(0, -1, -1);
+const lightColor = vec3.fromValues(1, 1, 1); // White light
+const light = new DirectionalLight(lightDirection, lightColor, 1.0);
+console.log('Directional light created');
 
 // Create cube mesh
 const cubeGeometry = Cube.create(gl, 1.0);
@@ -79,6 +87,20 @@ function render(): void {
   shader.setMat4('u_model', cubeMesh.getModelMatrix());
   shader.setMat4('u_view', camera.getViewMatrix());
   shader.setMat4('u_projection', camera.getProjectionMatrix());
+  
+  // Set normal matrix
+  // gl-matrix mat3 is compatible with Float32Array
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  shader.setMat3('u_normalMatrix', cubeTransform.getNormalMatrix() as Float32Array);
+
+  // Set lighting uniforms
+  const lightData = light.getUniformData();
+  // gl-matrix vec3 is compatible with Float32Array
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  shader.setVec3Array('u_lightDirection', lightData.direction as Float32Array);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  shader.setVec3Array('u_lightColor', lightData.color as Float32Array);
+  shader.setFloat('u_ambientStrength', 0.2);
 
   // Render cube
   cubeMesh.render(gl);

@@ -70,12 +70,12 @@ export class Shader {
   }
 
   /**
-   * Set uniform vec3
+   * Set uniform vec3 from vec3
    */
-  setVec3(name: string, x: number, y: number, z: number): void {
+  setVec3Array(name: string, value: Float32Array): void {
     const location = this.getUniformLocation(name);
     if (location) {
-      this.gl.uniform3f(location, x, y, z);
+      this.gl.uniform3fv(location, value);
     }
   }
 
@@ -86,6 +86,16 @@ export class Shader {
     const location = this.getUniformLocation(name);
     if (location) {
       this.gl.uniform4f(location, x, y, z, w);
+    }
+  }
+
+  /**
+   * Set uniform mat3
+   */
+  setMat3(name: string, matrix: Float32Array): void {
+    const location = this.getUniformLocation(name);
+    if (location) {
+      this.gl.uniformMatrix3fv(location, false, matrix);
     }
   }
 

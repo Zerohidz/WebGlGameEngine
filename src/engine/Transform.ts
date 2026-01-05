@@ -1,4 +1,4 @@
-import { mat4, vec3 } from 'gl-matrix';
+import { mat4, mat3, vec3 } from 'gl-matrix';
 
 /**
  * Transform class for position, rotation, and scale
@@ -32,6 +32,18 @@ export class Transform {
     mat4.scale(modelMatrix, modelMatrix, this.scale);
 
     return modelMatrix;
+  }
+
+  /**
+   * Get the normal matrix for this transform
+   * Normal matrix = transpose(inverse(mat3(modelMatrix)))
+   * This is needed for correct normal transformation with non-uniform scaling
+   */
+  getNormalMatrix(): mat3 {
+    const modelMatrix = this.getModelMatrix();
+    const normalMatrix = mat3.create();
+    mat3.normalFromMat4(normalMatrix, modelMatrix);
+    return normalMatrix;
   }
 
   /**
