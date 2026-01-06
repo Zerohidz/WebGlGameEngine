@@ -297,19 +297,23 @@
 - [x] Integration into `main.ts` with texture loading
 - [x] Browser verification with hat model + texture.png
 
-### Commit 10: Camera Improvements ✓
-- [x] Perspective/Orthographic toggle
-- [x] Camera controls
+### Commit 10: Camera Improvements ❌ **NOT IMPLEMENTED**
+- [ ] Perspective/Orthographic toggle
+- [ ] Camera controls (UI integration needed)
+**Issues:** Camera class only supports perspective projection. No orthographic mode exists.
 
-### Commit 11: Point Light ✓
+### Commit 11: Point Light ✅ **COMPLETE**
 - [x] PointLight class
 - [x] Attenuation calculation
 - [x] Multi-light support in shaders
+**Status:** Fully implemented in Commit 6, integrated in main.ts
 
-### Commit 13: Scene Graph ✓
-- [x] Scene class
-- [x] Object hierarchy management
-- [x] Parent-child transforms
+### Commit 13: Scene Graph ⚠️ **CODE EXISTS BUT NOT INTEGRATED**
+- [x] Scene class exists
+- [ ] Integration in main.ts
+- [x] Object hierarchy management (code ready)
+- [x] Parent-child transforms (code ready)
+**Status:** Scene.ts exists and tested in main-test.ts, but main.ts doesn't use it
 
 ---
 
