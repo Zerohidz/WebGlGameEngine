@@ -35,6 +35,11 @@ export interface ControlParams {
   geometry: {
     type: string; // 'Cube' | 'Sphere' | 'Cylinder' | 'Prism (Triangle)' | 'Prism (Hexagon)'
   };
+  controls: {
+    fpsMode: boolean;
+    movementSpeed: number;
+    mouseSensitivity: number;
+  };
 }
 
 /**
@@ -54,6 +59,7 @@ export class SceneControls {
     this.setupCameraControls();
     this.setupAnimationControls();
     this.setupGeometryControls();
+    this.setupControlsControls();
   }
 
   /**
@@ -266,6 +272,56 @@ export class SceneControls {
       .onChange(() => this.triggerChange());
 
     geometryFolder.open();
+  }
+
+  /**
+   * Setup controls folder (FPS controller)
+   */
+  private setupControlsControls(): void {
+    const controlsFolder = this.gui.addFolder('Controls');
+
+    // FPS mode toggle
+    controlsFolder
+      .add(this.params.controls, 'fpsMode')
+      .name('FPS Mode')
+      .onChange(() => this.triggerChange());
+
+    // Movement speed (only visible in FPS mode)
+    const speedControl = controlsFolder
+      .add(this.params.controls, 'movementSpeed', 1, 20, 0.5)
+      .name('Movement Speed')
+      .onChange(() => this.triggerChange());
+
+    // Mouse sensitivity (only visible in FPS mode)
+    const sensitivityControl = controlsFolder
+      .add(this.params.controls, 'mouseSensitivity', 0.0005, 0.01, 0.0001)
+      .name('Mouse Sensitivity')
+      .onChange(() => this.triggerChange());
+
+    // Update visibility based on FPS mode
+    const updateControlVisibility = (): void => {
+      if (this.params.controls.fpsMode) {
+        speedControl.show();
+        sensitivityControl.show();
+      } else {
+        speedControl.hide();
+        sensitivityControl.hide();
+      }
+    };
+
+    // Initial visibility
+    updateControlVisibility();
+
+    // Update on FPS mode change
+    controlsFolder
+      .controllers
+      .find(c => c.property === 'fpsMode')
+      ?.onChange(() => {
+        updateControlVisibility();
+        this.triggerChange();
+      });
+
+    controlsFolder.open();
   }
 
   /**

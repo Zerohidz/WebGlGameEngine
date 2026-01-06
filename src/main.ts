@@ -13,6 +13,7 @@ import { DirectionalLight } from './lighting/DirectionalLight';
 import { PointLight } from './lighting/PointLight';
 import { phongVertexShader, phongFragmentShader } from './shaders/phong';
 import { SceneControls } from './ui/SceneControls';
+import { FirstPersonController } from './controllers/FirstPersonController';
 
 console.log('WebGL2 Game Engine - Starting...');
 
@@ -123,7 +124,15 @@ const controls = new SceneControls({
   geometry: {
     type: 'Cube',
   },
+  controls: {
+    fpsMode: false,
+    movementSpeed: 5.0,
+    mouseSensitivity: 0.002,
+  },
 });
+
+// FPS Controller (initially null)
+let fpsController: FirstPersonController | null = null;
 
 // Update scene when controls change
 controls.onChange(() => {
@@ -206,19 +215,49 @@ controls.onChange(() => {
       mesh.setTexture(oldTexture);
     }
   }
+
+  // Handle FPS mode
+  if (controls.params.controls.fpsMode) {
+    // Enable FPS mode
+    if (!fpsController) {
+      fpsController = new FirstPersonController(camera, typedCanvas);
+      console.log('FPS Controller enabled');
+    }
+    // Update controller settings
+    fpsController.setMovementSpeed(controls.params.controls.movementSpeed);
+    fpsController.setMouseSensitivity(controls.params.controls.mouseSensitivity);
+    // Disable auto-rotation
+    controls.params.animation.autoRotate = false;
+  } else {
+    // Disable FPS mode
+    if (fpsController) {
+      fpsController = null;
+      // Reset camera to default position
+      camera.setPosition(0, 0, controls.params.camera.distance);
+      camera.setTarget(0, 0, 0);
+      console.log('FPS Controller disabled');
+    }
+  }
 });
 
 console.log('UI controls created');
 
 // Animation
 let time = 0;
+let lastFrameTime = performance.now();
 
 // Render loop
 function render(): void {
-  const deltaTime = 0.01 * controls.params.animation.speed;
+  const currentTime = performance.now();
+  const deltaTime = (currentTime - lastFrameTime) / 1000; // Convert to seconds
+  lastFrameTime = currentTime;
   
-  if (controls.params.animation.autoRotate) {
-    time += deltaTime;
+  // Update FPS controller if active
+  if (fpsController) {
+    fpsController.update(deltaTime);
+  } else if (controls.params.animation.autoRotate) {
+    // Only auto-rotate if FPS mode is off
+    time += 0.01 * controls.params.animation.speed;
     // Rotate mesh on X and Y axes
     meshTransform.setRotation(
       time * controls.params.animation.rotationSpeedX,
