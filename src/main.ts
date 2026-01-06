@@ -28,23 +28,6 @@ if (!canvas || !(canvas instanceof HTMLCanvasElement)) {
 // Resize canvas to fill window
 const typedCanvas = canvas; // Type narrowed to HTMLCanvasElement
 
-function resizeCanvas(): void {
-  typedCanvas.width = window.innerWidth;
-  typedCanvas.height = window.innerHeight;
-  
-  // Only update cameras if they exist (after initialization)
-  if (camera && gameCamera && renderer) {
-    renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height);
-    
-    // Only update aspect ratios if NOT in split view
-    // Split view sets its own aspect ratios per viewport in render loop
-    if (currentViewMode !== 'split') {
-      const fullAspect = typedCanvas.width / typedCanvas.height;
-      camera.setAspect(fullAspect);
-      gameCamera.setAspect(fullAspect);
-    }
-  }
-}
 
 // Initial resize (without camera updates)
 typedCanvas.width = window.innerWidth;
@@ -108,6 +91,15 @@ const satelliteMesh = new Mesh(sphereGeometry, satelliteTransform);
 scene.addObject('satellite', satelliteMesh, satelliteTransform);
 
 console.log('Scene graph initialized with Main Object and Satellite');
+
+// View Modes
+type ViewMode = 'engine' | 'game' | 'split';
+let currentViewMode: ViewMode = 'engine';
+
+// Get UI elements
+const tabEngine = document.getElementById('tab-engine');
+const tabGame = document.getElementById('tab-game');
+const tabSplit = document.getElementById('tab-split');
 
 // Load and apply texture
 import { TextureLoader } from './loaders/TextureLoader';
@@ -309,19 +301,30 @@ gameCamera.setPosition(10, 10, 10);
 gameCamera.setTarget(0, 0, 0);
 console.log('Game Camera initialized');
 
+
+function resizeCanvas(): void {
+  typedCanvas.width = window.innerWidth;
+  typedCanvas.height = window.innerHeight;
+  
+  // Only update cameras if they exist (after initialization)
+  if (camera && gameCamera && renderer) {
+    renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height);
+    
+    // Only update aspect ratios if NOT in split view
+    // Split view sets its own aspect ratios per viewport in render loop
+    if (currentViewMode !== 'split') {
+      const fullAspect = typedCanvas.width / typedCanvas.height;
+      camera.setAspect(fullAspect);
+      gameCamera.setAspect(fullAspect);
+    }
+  }
+}
+
 // Now we can safely add resize listener that uses cameras
 window.addEventListener('resize', () => {
   resizeCanvas();
 });
 
-// View Modes
-type ViewMode = 'engine' | 'game' | 'split';
-let currentViewMode: ViewMode = 'engine';
-
-// Get UI elements
-const tabEngine = document.getElementById('tab-engine');
-const tabGame = document.getElementById('tab-game');
-const tabSplit = document.getElementById('tab-split');
 
 // Tab Switching Logic
 function setViewMode(mode: ViewMode): void {
@@ -346,6 +349,21 @@ function setViewMode(mode: ViewMode): void {
       // Better approach: simulate the control change or just rely on the render loop check.
       // But we must stop the controller from updating.
     }
+  }
+
+  // Update aspect ratios immediately when switching modes
+  if (mode === 'split') {
+    // Set split view aspect ratios immediately
+    const halfWidth = typedCanvas.width / 2;
+    const height = typedCanvas.height;
+    const splitAspect = halfWidth / height;
+    camera.setAspect(splitAspect);
+    gameCamera.setAspect(splitAspect);
+  } else {
+    // Set full screen aspect
+    const fullAspect = typedCanvas.width / typedCanvas.height;
+    camera.setAspect(fullAspect);
+    gameCamera.setAspect(fullAspect);
   }
 
   // Update camera aspects
