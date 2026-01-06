@@ -70,6 +70,16 @@ export class Shader {
   }
 
   /**
+   * Set uniform int (for textures)
+   */
+  setInt(name: string, value: number): void {
+    const location = this.getUniformLocation(name);
+    if (location) {
+      this.gl.uniform1i(location, value);
+    }
+  }
+
+  /**
    * Set uniform vec3 from vec3
    */
   setVec3Array(name: string, value: Float32Array): void {
@@ -77,6 +87,13 @@ export class Shader {
     if (location) {
       this.gl.uniform3fv(location, value);
     }
+  }
+
+  /**
+   * Set uniform vec3
+   */
+  setVec3(name: string, value: Float32Array): void {
+    this.setVec3Array(name, value);
   }
 
   /**

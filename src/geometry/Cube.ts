@@ -16,52 +16,48 @@ export namespace Cube {
     const s = size;
 
     // Define 6 face colors for visual debugging
-    const colors = {
-      front: [1, 0, 0], // Red
-      back: [0, 1, 0], // Green
-      left: [0, 0, 1], // Blue
-      right: [1, 1, 0], // Yellow
-      top: [1, 0, 1], // Magenta
-      bottom: [0, 1, 1], // Cyan
-    };
+    // Helper to generate random colors for faces
+    const randomColor = () => [Math.random(), Math.random(), Math.random()];
 
-    // Interleaved vertex data: [pos(3), color(3), normal(3)] × 24 vertices
+    // Generate vertices
+    // Each face has 4 vertices with: position (3), color (3), normal (3), uv (2)
+    // Total 11 floats per vertex
     const vertices = new Float32Array([
-      // Front face (Z+) - Red
-      -s, -s, s, ...colors.front, 0, 0, 1, // 0
-      s, -s, s, ...colors.front, 0, 0, 1, // 1
-      s, s, s, ...colors.front, 0, 0, 1, // 2
-      -s, s, s, ...colors.front, 0, 0, 1, // 3
+      // Front face (z = size/2)
+      -s, -s,  s, ...randomColor(),  0,  0,  1,  0, 0,
+       s, -s,  s, ...randomColor(),  0,  0,  1,  1, 0,
+       s,  s,  s, ...randomColor(),  0,  0,  1,  1, 1,
+      -s,  s,  s, ...randomColor(),  0,  0,  1,  0, 1,
 
-      // Back face (Z-) - Green
-      s, -s, -s, ...colors.back, 0, 0, -1, // 4
-      -s, -s, -s, ...colors.back, 0, 0, -1, // 5
-      -s, s, -s, ...colors.back, 0, 0, -1, // 6
-      s, s, -s, ...colors.back, 0, 0, -1, // 7
+      // Back face (z = -size/2)
+       s, -s, -s, ...randomColor(),  0,  0, -1,  0, 0,
+      -s, -s, -s, ...randomColor(),  0,  0, -1,  1, 0,
+      -s,  s, -s, ...randomColor(),  0,  0, -1,  1, 1,
+       s,  s, -s, ...randomColor(),  0,  0, -1,  0, 1,
 
-      // Left face (X-) - Blue
-      -s, -s, -s, ...colors.left, -1, 0, 0, // 8
-      -s, -s, s, ...colors.left, -1, 0, 0, // 9
-      -s, s, s, ...colors.left, -1, 0, 0, // 10
-      -s, s, -s, ...colors.left, -1, 0, 0, // 11
+      // Top face (y = size/2)
+      -s,  s,  s, ...randomColor(),  0,  1,  0,  0, 0,
+       s,  s,  s, ...randomColor(),  0,  1,  0,  1, 0,
+       s,  s, -s, ...randomColor(),  0,  1,  0,  1, 1,
+      -s,  s, -s, ...randomColor(),  0,  1,  0,  0, 1,
 
-      // Right face (X+) - Yellow
-      s, -s, s, ...colors.right, 1, 0, 0, // 12
-      s, -s, -s, ...colors.right, 1, 0, 0, // 13
-      s, s, -s, ...colors.right, 1, 0, 0, // 14
-      s, s, s, ...colors.right, 1, 0, 0, // 15
+      // Bottom face (y = -size/2)
+      -s, -s, -s, ...randomColor(),  0, -1,  0,  0, 0,
+       s, -s, -s, ...randomColor(),  0, -1,  0,  1, 0,
+       s, -s,  s, ...randomColor(),  0, -1,  0,  1, 1,
+      -s, -s,  s, ...randomColor(),  0, -1,  0,  0, 1,
 
-      // Top face (Y+) - Magenta
-      -s, s, s, ...colors.top, 0, 1, 0, // 16
-      s, s, s, ...colors.top, 0, 1, 0, // 17
-      s, s, -s, ...colors.top, 0, 1, 0, // 18
-      -s, s, -s, ...colors.top, 0, 1, 0, // 19
+      // Right face (x = size/2)
+       s, -s,  s, ...randomColor(),  1,  0,  0,  0, 0,
+       s, -s, -s, ...randomColor(),  1,  0,  0,  1, 0,
+       s,  s, -s, ...randomColor(),  1,  0,  0,  1, 1,
+       s,  s,  s, ...randomColor(),  1,  0,  0,  0, 1,
 
-      // Bottom face (Y-) - Cyan
-      -s, -s, -s, ...colors.bottom, 0, -1, 0, // 20
-      s, -s, -s, ...colors.bottom, 0, -1, 0, // 21
-      s, -s, s, ...colors.bottom, 0, -1, 0, // 22
-      -s, -s, s, ...colors.bottom, 0, -1, 0, // 23
+      // Left face (x = -size/2)
+      -s, -s, -s, ...randomColor(), -1,  0,  0,  0, 0,
+      -s, -s,  s, ...randomColor(), -1,  0,  0,  1, 0,
+      -s,  s,  s, ...randomColor(), -1,  0,  0,  1, 1,
+      -s,  s, -s, ...randomColor(), -1,  0,  0,  0, 1,
     ]);
 
     // Indices: 6 faces × 2 triangles × 3 vertices = 36 indices

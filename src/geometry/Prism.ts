@@ -28,63 +28,75 @@ export namespace Prism {
     const topColor: [number, number, number] = sides === 3 ? [1, 0.5, 0] : [0.5, 0, 1]; // Orange for triangle, purple for hexagon
     const bottomColor: [number, number, number] = sides === 3 ? [0, 0.5, 1] : [1, 0.5, 0]; // Blue for triangle, orange for hexagon
 
-    // Index tracking
-    let vertexIndex = 0;
-
-    // === TOP CAP ===
-    const topCenterIndex = vertexIndex++;
-    // Center vertex
-    vertices.push(0, halfHeight, 0, ...topColor, 0, 1, 0);
-
-    // Top cap perimeter
+    // === CAPS (TOP AND BOTTOM) ===
+    // Generate perimeter vertices for both top and bottom caps
+    // Using interleaved strategy similar to fixed Cylinder: Top0, Bottom0, Top1, Bottom1...
+    
     for (let i = 0; i <= sides; i++) {
       const angle = (i * 2 * Math.PI) / sides;
-      const x = radius * Math.cos(angle);
-      const z = radius * Math.sin(angle);
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
 
-      // Position, color, normal (pointing up)
-      vertices.push(x, halfHeight, z, ...topColor, 0, 1, 0);
-      vertexIndex++;
-    }
-
-    // Top cap triangles (fan from center)
-    for (let i = 0; i < sides; i++) {
-      indices.push(
-        topCenterIndex,
-        topCenterIndex + i + 1,
-        topCenterIndex + i + 2
+      // Top vertex
+      // pos(3), color(3), normal(3), uv(2)
+      vertices.push(
+        x, halfHeight, z,
+        topColor[0], topColor[1], topColor[2],
+        0, 1, 0,
+        (x / radius) * 0.5 + 0.5, (z / radius) * 0.5 + 0.5
+      );
+      // Bottom vertex
+      vertices.push(
+        x, -halfHeight, z,
+        bottomColor[0], bottomColor[1], bottomColor[2],
+        0, -1, 0,
+        (x / radius) * 0.5 + 0.5, (z / radius) * 0.5 + 0.5
       );
     }
 
-    // === BOTTOM CAP ===
-    const bottomCenterIndex = vertexIndex++;
-    // Center vertex
-    vertices.push(0, -halfHeight, 0, ...bottomColor, 0, -1, 0);
+    // Add center vertices for caps
+    // Top center
+    const topCenterIndex = vertices.length / 11;
+    vertices.push(
+      0, halfHeight, 0,
+      topColor[0], topColor[1], topColor[2],
+      0, 1, 0,
+      0.5, 0.5
+    );
 
-    // Bottom cap perimeter
-    for (let i = 0; i <= sides; i++) {
-      const angle = (i * 2 * Math.PI) / sides;
-      const x = radius * Math.cos(angle);
-      const z = radius * Math.sin(angle);
+    // Bottom center
+    const bottomCenterIndex = topCenterIndex + 1;
+    vertices.push(
+      0, -halfHeight, 0,
+      bottomColor[0], bottomColor[1], bottomColor[2],
+      0, -1, 0,
+      0.5, 0.5
+    );
 
-      // Position, color, normal (pointing down)
-      vertices.push(x, -halfHeight, z, ...bottomColor, 0, -1, 0);
-      vertexIndex++;
+    // Top cap triangles (fan from center)
+    // Top vertices are at even indices: 0, 2, 4...
+    for (let i = 0; i < sides; i++) {
+      indices.push(
+        topCenterIndex,
+        i * 2,
+        (i + 1) * 2
+      );
     }
 
     // Bottom cap triangles (fan from center, reversed winding)
+    // Bottom vertices are at odd indices: 1, 3, 5...
     for (let i = 0; i < sides; i++) {
       indices.push(
         bottomCenterIndex,
-        bottomCenterIndex + i + 2,
-        bottomCenterIndex + i + 1
+        (i + 1) * 2 + 1,
+        i * 2 + 1
       );
     }
 
     // === SIDE WALLS ===
-    const sideStartIndex = vertexIndex;
+    const sideStartIndex = vertices.length / 11; // Starting index for side wall vertices
 
-    // Generate vertices for each face
+    // Generate vertices and indices for each face
     for (let i = 0; i < sides; i++) {
       const angle1 = (i * 2 * Math.PI) / sides;
       const angle2 = ((i + 1) * 2 * Math.PI) / sides;
@@ -94,13 +106,12 @@ export namespace Prism {
       const x2 = radius * Math.cos(angle2);
       const z2 = radius * Math.sin(angle2);
 
-      // Calculate face normal (perpendicular to face, pointing outward)
-      // For flat faces, normal is perpendicular to the edge and pointing out
-      const midAngle = (angle1 + angle2) / 2;
-      const nx = Math.cos(midAngle);
-      const nz = Math.sin(midAngle);
+      // Calculate normal for this face (flat shading)
+      const normalAngle = (angle1 + angle2) / 2;
+      const nx = Math.cos(normalAngle);
+      const nz = Math.sin(normalAngle);
 
-      // Color gradient
+      // Color gradient for side
       const t = i / sides;
       const r = topColor[0] * (1 - t) + bottomColor[0] * t;
       const g = topColor[1] * (1 - t) + bottomColor[1] * t;
@@ -108,29 +119,20 @@ export namespace Prism {
 
       // Four vertices per face (quad)
       // Top left
-      vertices.push(x1, halfHeight, z1, r, g, b, nx, 0, nz);
+      vertices.push(x1, halfHeight, z1, r, g, b, nx, 0, nz, i / sides, 1);
       // Bottom left
-      vertices.push(x1, -halfHeight, z1, r, g, b, nx, 0, nz);
-      // Top right
-      vertices.push(x2, halfHeight, z2, r, g, b, nx, 0, nz);
+      vertices.push(x1, -halfHeight, z1, r, g, b, nx, 0, nz, i / sides, 0);
       // Bottom right
-      vertices.push(x2, -halfHeight, z2, r, g, b, nx, 0, nz);
-
-      vertexIndex += 4;
-    }
-
-    // Side wall triangles (two per face)
-    for (let i = 0; i < sides; i++) {
+      vertices.push(x2, -halfHeight, z2, r, g, b, nx, 0, nz, (i + 1) / sides, 0);
+      // Top right
+      vertices.push(x2, halfHeight, z2, r, g, b, nx, 0, nz, (i + 1) / sides, 1);
+      
+      // Indices for this face
       const base = sideStartIndex + i * 4;
-      const topLeft = base;
-      const bottomLeft = base + 1;
-      const topRight = base + 2;
-      const bottomRight = base + 3;
-
-      // First triangle
-      indices.push(topLeft, bottomLeft, topRight);
-      // Second triangle
-      indices.push(topRight, bottomLeft, bottomRight);
+      // TL, BL, BR
+      indices.push(base, base + 1, base + 2);
+      // TL, BR, TR
+      indices.push(base, base + 2, base + 3);
     }
 
     return new Geometry(

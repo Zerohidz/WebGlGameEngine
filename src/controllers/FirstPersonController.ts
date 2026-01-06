@@ -44,7 +44,7 @@ export class FirstPersonController {
 
     // Mouse events
     this.canvas.addEventListener('click', () => {
-      this.canvas.requestPointerLock();
+      void this.canvas.requestPointerLock();
     });
 
     document.addEventListener('pointerlockchange', () => {

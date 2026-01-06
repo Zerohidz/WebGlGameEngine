@@ -83,6 +83,13 @@ meshTransform.setPosition(0, 0, 0);
 let mesh = new Mesh(currentGeometry, meshTransform);
 console.log('Geometries created (Cube, Sphere, Cylinder, Prism x2)');
 
+// Load and apply texture
+import { TextureLoader } from './loaders/TextureLoader';
+TextureLoader.load(gl, '/models/texture.png').then(texture => {
+  mesh.setTexture(texture);
+  console.log('Texture applied to mesh');
+});
+
 // Create UI controls
 const controls = new SceneControls({
   lighting: {
@@ -157,27 +164,37 @@ controls.onChange(() => {
   if (controls.params.geometry.type === 'Cube') {
     if (currentGeometry !== cubeGeometry) {
       currentGeometry = cubeGeometry;
+      const oldTexture = mesh.texture;
       mesh = new Mesh(currentGeometry, meshTransform);
+      mesh.setTexture(oldTexture);
     }
   } else if (controls.params.geometry.type === 'Sphere') {
     if (currentGeometry !== sphereGeometry) {
       currentGeometry = sphereGeometry;
+      const oldTexture = mesh.texture;
       mesh = new Mesh(currentGeometry, meshTransform);
+      mesh.setTexture(oldTexture);
     }
   } else if (controls.params.geometry.type === 'Cylinder') {
     if (currentGeometry !== cylinderGeometry) {
       currentGeometry = cylinderGeometry;
+      const oldTexture = mesh.texture;
       mesh = new Mesh(currentGeometry, meshTransform);
+      mesh.setTexture(oldTexture);
     }
   } else if (controls.params.geometry.type === 'Prism (Triangle)') {
     if (currentGeometry !== prismTriangleGeometry) {
       currentGeometry = prismTriangleGeometry;
+      const oldTexture = mesh.texture;
       mesh = new Mesh(currentGeometry, meshTransform);
+      mesh.setTexture(oldTexture);
     }
   } else if (controls.params.geometry.type === 'Prism (Hexagon)') {
     if (currentGeometry !== prismHexagonGeometry) {
       currentGeometry = prismHexagonGeometry;
+      const oldTexture = mesh.texture;
       mesh = new Mesh(currentGeometry, meshTransform);
+      mesh.setTexture(oldTexture);
     }
   }
 });
@@ -216,6 +233,16 @@ function render(): void {
   // gl-matrix mat3 is compatible with Float32Array
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   shader.setMat3('u_normalMatrix', meshTransform.getNormalMatrix() as Float32Array);
+
+  // Bind texture if available
+  if (mesh.texture) {
+    shader.setInt('u_useTexture', 1);
+    shader.setInt('u_texture', 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, mesh.texture);
+  } else {
+    shader.setInt('u_useTexture', 0);
+  }
 
   // Set lighting uniforms
   const lightData = light.getUniformData();

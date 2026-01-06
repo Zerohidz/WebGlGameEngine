@@ -9,10 +9,18 @@ import { Transform } from '../engine/Transform';
 export class Mesh {
   geometry: Geometry;
   transform: Transform;
+  texture: WebGLTexture | null = null;
 
   constructor(geometry: Geometry, transform: Transform) {
     this.geometry = geometry;
     this.transform = transform;
+  }
+
+  /**
+   * Set texture for this mesh
+   */
+  setTexture(texture: WebGLTexture | null): void {
+    this.texture = texture;
   }
 
   /**

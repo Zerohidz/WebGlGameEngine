@@ -50,8 +50,12 @@ export namespace Sphere {
         const g = 0.5;
         const b = (1.0 - colorT) * 0.8 + 0.2; // 1.0 to 0.2
 
-        // Interleaved: [position(3), color(3), normal(3)]
-        vertices.push(x, y, z, r, g, b, nx, ny, nz);
+        // UV coordinates
+        const u = 1 - (segment / segments);
+        const v = 1 - (ring / rings);
+
+        // Interleaved: [position(3), color(3), normal(3), uv(2)]
+        vertices.push(x, y, z, r, g, b, nx, ny, nz, u, v);
       }
     }
 
