@@ -402,7 +402,8 @@ function render(): void {
 
   // Common Uniforms function
   const setUniforms = (cam: Camera): void => {
-    renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height); // Default full
+    // NOTE: Viewport should already be set by the caller!
+    // Don't override it here or split view will break
     shader.use();
 
     // Lighting
