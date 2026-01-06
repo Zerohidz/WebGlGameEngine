@@ -153,7 +153,8 @@ const controls = new SceneControls({
 // FPS Controller (initially null)
 let fpsController: FirstPersonController | null = null;
 
-// Orbit Controller for Game View (initially null)
+// Orbit Controller for Game View (always active for gameCamera)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let orbitController: OrbitController | null = null;
 
 // Canvas click handler for pointer lock (only active when FPS mode is enabled AND in correct view)
