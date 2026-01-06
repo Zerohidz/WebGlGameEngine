@@ -39,7 +39,7 @@ const renderer = new WebGLRenderer(gl, typedCanvas);
 
 // Create camera
 const camera = new Camera(75, typedCanvas.width / typedCanvas.height, 0.1, 100);
-camera.setPosition(0, 2, 8);
+camera.setPosition(0, 3, 15);
 camera.setTarget(0, 0, 0);
 
 window.addEventListener('resize', () => {
@@ -89,21 +89,21 @@ scene.addObject('sphere3', sphere3, sphere3Transform);
 console.log('Scene has', scene.getAllObjects().length, 'objects');
 
 // === TEST COMMIT 10: OBJ Loader ===
-console.log('Testing Commit 10: OBJ Loader');
+console.log('Testing Commit 10: OBJ Loader - Loading hat model');
 let objMesh: Mesh | null = null;
 
-OBJLoader.load(gl, '/models/cube.obj')
+OBJLoader.load(gl, '/models/model.obj')
   .then(geometry => {
-    console.log('OBJ loaded successfully:', geometry.getIndexCount(), 'indices');
+    console.log('Hat model loaded successfully:', geometry.getIndexCount(), 'indices');
     const objTransform = new Transform();
-    objTransform.setPosition(0, -2, 0);
-    objTransform.setScale(1.5, 1.5, 1.5);
+    objTransform.setPosition(0, 0, 0);
+    objTransform.setScale(0.15, 0.15, 0.15); // Scale down the hat
     objMesh = new Mesh(geometry, objTransform);
-    scene.addObject('objCube', objMesh, objTransform);
-    console.log('OBJ added to scene. Total objects:', scene.getAllObjects().length);
+    scene.addObject('hatModel', objMesh, objTransform);
+    console.log('Hat model added to scene. Total objects:', scene.getAllObjects().length);
   })
   .catch(error => {
-    console.error('Failed to load OBJ:', error);
+    console.error('Failed to load hat model:', error);
   });
 
 // === TEST COMMIT 13: First Person Controller ===
@@ -126,10 +126,10 @@ instructions.innerHTML = `
 <br>
 <strong>Scene Graph (Commit 11):</strong><br>
 - 3 spheres in scene<br>
-- 1 OBJ cube (loaded async)<br>
+- 1 hat model (loaded async)<br>
 <br>
 <strong>OBJ Loader (Commit 10):</strong><br>
-- Loading cube.obj from /models/<br>
+- Loading model.obj (hat) from /models/<br>
 - Check console for status<br>
 <br>
 <strong>FPS Controller (Commit 13):</strong><br>
@@ -158,9 +158,9 @@ function render(): void {
   sphere2Transform.setRotation(0, time * 50, time * 30);
   sphere3Transform.setRotation(time * 40, 0, time * 50);
 
-  // Rotate OBJ if loaded
+  // Rotate hat model if loaded
   if (objMesh) {
-    const objTransform = scene.getObject('objCube')?.transform;
+    const objTransform = scene.getObject('hatModel')?.transform;
     if (objTransform) {
       objTransform.setRotation(time * 20, time * 30, 0);
     }
