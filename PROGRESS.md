@@ -6,9 +6,11 @@
 
 ---
 
-## 📊 Mevcut İlerleme (11/15 Commit Tamamlandı - %73 + Bonus)
+## 📊 Mevcut İlerleme - DURUM KONTROLÜ
 
-### ✅ Tamamlanan Commitler
+**ÖNEMLİ:** Progress raporu hatalıydı. Gerçek durum aşağıdadır.
+
+### ✅ TAMAMEN Tamamlanan Commitler (main.ts'de entegre)
 
 #### Commit 1: Proje Setup ✅
 **Dosyalar:**
@@ -172,6 +174,64 @@
 - ✅ Support for v//vn format (position + normal)
 - ✅ Face triangulation (handles quads and n-gons)
 - ✅ Automatic color generation from position
+
+---
+
+### ⚠️ KISMİ Tamamlanan Commitler (Kod yazıldı ama main.ts'de KULLANILMIYOR)
+
+#### Commit 11: Scene Graph ⚠️ **KOD VAR AMA ENTEGRE DEĞİL**
+**Dosyalar:**
+- `src/engine/Scene.ts` - Scene class (VAR ama main.ts'de kullanılmıyor)
+- `src/main-test.ts` - Test dosyasında kullanılmış
+
+**Sonuç:**
+- ✅ Scene class yazıldı (addObject, removeObject, render methods)
+- ❌ main.ts'de entegre edilmedi
+- ✅ main-test.ts'de test edildi
+
+#### Commit 12: ??? **ATLANDI**
+**Durum:** Commit 12 planlamada atlanmış, numaralandırma hatalı
+
+#### Commit 13: First Person Controller ⚠️ **KOD VAR AMA ENTEGRE DEĞİL**
+**Dosyalar:**
+- `src/controllers/FirstPersonController.ts` - FPS Controller (VAR ama main.ts'de kullanılmıyor)
+- WASD movement + Mouse look
+- `src/main-test.ts` - Test dosyasında kullanılmış
+
+**Sonuç:**
+- ✅ FirstPersonController class yazıldı (WASD, mouse look, pointer lock)
+- ❌ main.ts'de entegre edilmedi
+- ✅ main-test.ts'de test edildi
+
+---
+
+### ❌ Tamamlanmamış Commitler
+
+#### Commit 14: Advanced Features **YAPILMADI**
+- [ ] Skybox rendering
+- [ ] Post-processing effects
+- [ ] Shadow mapping (optional)
+
+#### Commit 15: OBJ Loader Enhancement **YAPILMADI**
+- [ ] Material (.mtl) parsing
+- [ ] Multi-object support
+- [ ] Optimization
+
+---
+
+## 📊 Gerçek İstatistikler
+
+**TAMAMEN Tamamlanan:** 9/15 Commit (%60)
+- Commits 1-9: Proje setup → Texture System
+
+**KISMİ Tamamlanan (Entegrasyon Gerekiyor):** 2 Commit
+- Commit 11: Scene Graph (kod var, entegrasyon yok)
+- Commit 13: First Person Controller (kod var, entegrasyon yok)
+
+**YAPILMADI:** 3 Commit
+- Commit 12: Atlanmış
+- Commit 14: Advanced Features
+- Commit 15: OBJ Loader Enhancement
 # WebGL2 Game Engine - Development Progress
 
 **Project Deadline:** January 7, 2026
