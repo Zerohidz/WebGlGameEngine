@@ -17,17 +17,23 @@ export class OrbitController {
   private lastMouseY: number = 0;
   private sensitivity: number = 0.005;
 
-  constructor(camera: Camera, canvas: HTMLCanvasElement, target: vec3 = vec3.fromValues(0, 0, 0), distance: number = 10) {
+  constructor(camera: Camera, canvas: HTMLCanvasElement, target: vec3 = vec3.fromValues(0, 0, 0)) {
     this.camera = camera;
     this.canvas = canvas;
     this.target = vec3.clone(target);
-    this.distance = distance;
     
-    // Initial angles (looking from top-right)
-    this.azimuth = Math.PI / 4; // 45 degrees
-    this.elevation = Math.PI / 6; // 30 degrees
+    // Calculate initial distance from camera's current position
+    const camPos = camera.position;
+    const dx = camPos[0] - this.target[0];
+    const dy = camPos[1] - this.target[1];
+    const dz = camPos[2] - this.target[2];
+    this.distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    
+    // Calculate initial angles from camera position
+    const xz = Math.sqrt(dx * dx + dz * dz);
+    this.azimuth = Math.atan2(dx, dz);
+    this.elevation = Math.atan2(dy, xz);
 
-    this.updateCameraPosition();
     this.setupEventListeners();
   }
 

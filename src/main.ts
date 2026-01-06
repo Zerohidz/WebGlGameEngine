@@ -296,6 +296,7 @@ controls.onChange(() => {
         console.log('Orbit Controller enabled');
       }
       orbitController.setSensitivity(controls.params.controls.orbitSensitivity);
+      orbitController.setDistance(controls.params.camera.distance);
       controls.params.animation.autoRotate = false;
       
       // Disable FPS if active
