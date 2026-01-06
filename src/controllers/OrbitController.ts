@@ -85,8 +85,7 @@ export class OrbitController {
 
   public setDistance(distance: number): void {
     this.distance = distance;
-    // Don't call updateCameraPosition here - it will be called on next mouse move
-    // This prevents desync when UI changes distance while user is not dragging
+    this.updateCameraPosition();
   }
 
   public setSensitivity(sensitivity: number): void {
