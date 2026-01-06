@@ -36,9 +36,10 @@ export interface ControlParams {
     type: string; // 'Cube' | 'Sphere' | 'Cylinder' | 'Prism (Triangle)' | 'Prism (Hexagon)'
   };
   controls: {
-    fpsMode: boolean;
+    cameraMode: string; // 'None' | 'FPS' | 'Orbit'
     movementSpeed: number;
     mouseSensitivity: number;
+    orbitSensitivity: number;
   };
 }
 
@@ -275,15 +276,15 @@ export class SceneControls {
   }
 
   /**
-   * Setup controls folder (FPS controller)
+   * Setup controls folder (Camera controller modes)
    */
   private setupControlsControls(): void {
     const controlsFolder = this.gui.addFolder('Controls');
 
-    // FPS mode toggle
+    // Camera mode dropdown
     controlsFolder
-      .add(this.params.controls, 'fpsMode')
-      .name('FPS Mode')
+      .add(this.params.controls, 'cameraMode', ['None', 'FPS', 'Orbit'])
+      .name('Camera Mode')
       .onChange(() => this.triggerChange());
 
     // Movement speed (only visible in FPS mode)
@@ -292,30 +293,43 @@ export class SceneControls {
       .name('Movement Speed')
       .onChange(() => this.triggerChange());
 
-    // Mouse sensitivity (only visible in FPS mode)
-    const sensitivityControl = controlsFolder
+    // Mouse sensitivity for FPS (only visible in FPS mode)
+    const fpsSensitivityControl = controlsFolder
       .add(this.params.controls, 'mouseSensitivity', 0.0005, 0.01, 0.0001)
-      .name('Mouse Sensitivity')
+      .name('FPS Sensitivity')
       .onChange(() => this.triggerChange());
 
-    // Update visibility based on FPS mode
+    // Orbit sensitivity (only visible in Orbit mode)
+    const orbitSensitivityControl = controlsFolder
+      .add(this.params.controls, 'orbitSensitivity', 0.001, 0.02, 0.001)
+      .name('Orbit Sensitivity')
+      .onChange(() => this.triggerChange());
+
+    // Update visibility based on camera mode
     const updateControlVisibility = (): void => {
-      if (this.params.controls.fpsMode) {
+      const mode = this.params.controls.cameraMode;
+      if (mode === 'FPS') {
         speedControl.show();
-        sensitivityControl.show();
+        fpsSensitivityControl.show();
+        orbitSensitivityControl.hide();
+      } else if (mode === 'Orbit') {
+        speedControl.hide();
+        fpsSensitivityControl.hide();
+        orbitSensitivityControl.show();
       } else {
         speedControl.hide();
-        sensitivityControl.hide();
+        fpsSensitivityControl.hide();
+        orbitSensitivityControl.hide();
       }
     };
 
     // Initial visibility
     updateControlVisibility();
 
-    // Update on FPS mode change
+    // Update on camera mode change
     controlsFolder
       .controllers
-      .find(c => c.property === 'fpsMode')
+      .find(c => c.property === 'cameraMode')
       ?.onChange(() => {
         updateControlVisibility();
         this.triggerChange();

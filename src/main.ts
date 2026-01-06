@@ -144,9 +144,10 @@ const controls = new SceneControls({
     type: 'Cube',
   },
   controls: {
-    fpsMode: false,
+    cameraMode: 'None', // 'None' | 'FPS' | 'Orbit'
     movementSpeed: 5.0,
     mouseSensitivity: 0.002,
+    orbitSensitivity: 0.005,
   },
 });
 
@@ -266,35 +267,66 @@ controls.onChange(() => {
       // satelliteTransform.setParent(meshTransform); // Already set
   }
 
-  // Handle FPS mode
-  if (controls.params.controls.fpsMode) {
-    // Enable FPS mode
-    if (!fpsController) {
-      fpsController = new FirstPersonController(camera, typedCanvas);
-      // Add canvas click listener for pointer lock
-      typedCanvas.addEventListener('click', canvasClickHandler);
-      console.log('FPS Controller enabled');
-    }
-    // Update controller settings
-    fpsController.setMovementSpeed(controls.params.controls.movementSpeed);
-    fpsController.setMouseSensitivity(controls.params.controls.mouseSensitivity);
-    // Disable auto-rotation
-    controls.params.animation.autoRotate = false;
-  } else {
-    // Disable FPS mode
-    if (fpsController) {
-      fpsController = null;
-      // Remove canvas click listener
-      typedCanvas.removeEventListener('click', canvasClickHandler);
-      // Exit pointer lock if active
-      if (document.pointerLockElement === typedCanvas) {
-        document.exitPointerLock();
+  // Handle Camera Mode changes
+  const cameraMode = controls.params.controls.cameraMode;
+  
+  switch (cameraMode) {
+    case 'FPS':
+      // Enable FPS mode
+      if (!fpsController) {
+        fpsController = new FirstPersonController(camera, typedCanvas);
+        typedCanvas.addEventListener('click', canvasClickHandler);
+        console.log('FPS Controller enabled');
       }
-      // Reset camera to default position
-      camera.setPosition(0, 0, controls.params.camera.distance);
-      camera.setTarget(0, 0, 0);
-      console.log('FPS Controller disabled');
-    }
+      fpsController.setMovementSpeed(controls.params.controls.movementSpeed);
+      fpsController.setMouseSensitivity(controls.params.controls.mouseSensitivity);
+      controls.params.animation.autoRotate = false;
+      
+      // Disable orbit if active
+      if (orbitController) {
+        orbitController.destroy();
+        orbitController = null;
+      }
+      break;
+      
+    case 'Orbit':
+      // Enable Orbit mode
+      if (!orbitController) {
+        orbitController = new OrbitController(camera, typedCanvas);
+        console.log('Orbit Controller enabled');
+      }
+      orbitController.setSensitivity(controls.params.controls.orbitSensitivity);
+      controls.params.animation.autoRotate = false;
+      
+      // Disable FPS if active
+      if (fpsController) {
+        fpsController = null;
+        typedCanvas.removeEventListener('click', canvasClickHandler);
+        if (document.pointerLockElement === typedCanvas) {
+          document.exitPointerLock();
+        }
+      }
+      break;
+      
+    case 'None':
+    default:
+      // Disable both controllers
+      if (fpsController) {
+        fpsController = null;
+        typedCanvas.removeEventListener('click', canvasClickHandler);
+        if (document.pointerLockElement === typedCanvas) {
+          document.exitPointerLock();
+        }
+        camera.setPosition(0, 0, controls.params.camera.distance);
+        camera.setTarget(0, 0, 0);
+        console.log('FPS Controller disabled');
+      }
+      if (orbitController) {
+        orbitController.destroy();
+        orbitController = null;
+        console.log('Orbit Controller disabled');
+      }
+      break;
   }
 });
 
@@ -305,10 +337,6 @@ const gameCamera = new Camera(60, typedCanvas.width / typedCanvas.height, 0.1, 1
 gameCamera.setPosition(10, 10, 10);
 gameCamera.setTarget(0, 0, 0);
 console.log('Game Camera initialized');
-
-// Create Orbit Controller for Game View
-orbitController = new OrbitController(gameCamera, typedCanvas);
-console.log('Orbit Controller initialized for Game View');
 
 
 function resizeCanvas(): void {
@@ -344,10 +372,13 @@ function setViewMode(mode: ViewMode): void {
   tabGame?.classList.toggle('active', mode === 'game');
   tabSplit?.classList.toggle('active', mode === 'split');
 
-  // Handle FPS Controller state when switching away from Engine view
-  if (mode !== 'engine' && fpsController) {
+  // Handle camera controller state when switching away from Engine view
+  if (mode !== 'engine') {
+    // Exit pointer lock and reset camera mode
     document.exitPointerLock();
-    controls.params.controls.fpsMode = false;
+    if (controls.params.controls.cameraMode !== 'None') {
+      controls.params.controls.cameraMode = 'None';
+    }
   }
 
   // Update aspect ratios immediately when switching modes
