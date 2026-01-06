@@ -22,8 +22,8 @@
 - ✅ Scene Graph & UI: Object management, transforms, light controls
 
 #### Bonus Features (+50 Puan)
-- ✅ Dual Viewports (+25): Engine View + Camera View
 - ✅ Advanced Camera Controller (+25): First Person Controller (WASD + Mouse Look)
+- [ ] Dual Viewports (+25): Engine View + Camera View (Next Priority)
 
 ### 2. Teknoloji Yığını
 

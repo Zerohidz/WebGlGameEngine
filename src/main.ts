@@ -280,6 +280,63 @@ controls.onChange(() => {
 
 console.log('UI controls created');
 
+// View Modes
+type ViewMode = 'engine' | 'game' | 'split';
+let currentViewMode: ViewMode = 'engine';
+
+// Get UI elements
+const tabEngine = document.getElementById('tab-engine');
+const tabGame = document.getElementById('tab-game');
+const tabSplit = document.getElementById('tab-split');
+
+// Create Game Camera (Fixed View)
+const gameCamera = new Camera(60, typedCanvas.width / typedCanvas.height, 0.1, 100);
+gameCamera.setPosition(10, 10, 10);
+gameCamera.setTarget(0, 0, 0);
+console.log('Game Camera initialized');
+
+// Tab Switching Logic
+function setViewMode(mode: ViewMode): void {
+  currentViewMode = mode;
+  
+  // Update UI classes
+  tabEngine?.classList.toggle('active', mode === 'engine');
+  tabGame?.classList.toggle('active', mode === 'game');
+  tabSplit?.classList.toggle('active', mode === 'split');
+
+  // Handle FPS Controller state
+  if (mode === 'engine') {
+    // If returning to engine view, we might want to re-enable capabilities but NOT auto-lock
+    // The user still needs to click to lock.
+  } else {
+    // Force exit FPS mode if switching away
+    if (fpsController) {
+      document.exitPointerLock();
+      controls.params.controls.fpsMode = false;
+      // We need to manually trigger the "disable" logic which is currently inside controls.onChange logic
+      // Ideally we should refactor that, but for now let's just forcefully null it and remove listeners if we could access them.
+      // Better approach: simulate the control change or just rely on the render loop check.
+      // But we must stop the controller from updating.
+    }
+  }
+
+  // Update camera aspects
+  resizeCanvas(); // re-trigger aspect calc
+}
+
+tabEngine?.addEventListener('click', () => setViewMode('engine'));
+tabGame?.addEventListener('click', () => setViewMode('game'));
+tabSplit?.addEventListener('click', () => setViewMode('split'));
+
+// Update camera on resize (modified for split screen)
+window.addEventListener('resize', () => {
+    resizeCanvas();
+});
+
+// Modified resizeCanvas to handle split aspect ratio if needed
+// We'll stick to the original resize logic which sets canvas size.
+// Aspect ratio updates happen in the render loop or separate handler.
+
 // Animation
 let time = 0;
 let lastFrameTime = performance.now();
@@ -290,8 +347,8 @@ function render(): void {
   const deltaTime = (currentTime - lastFrameTime) / 1000; // Convert to seconds
   lastFrameTime = currentTime;
   
-  // Update FPS controller if active
-  if (fpsController) {
+  // Update FPS controller if active AND in Engine View
+  if (currentViewMode === 'engine' && fpsController) {
     fpsController.update(deltaTime);
   } else if (controls.params.animation.autoRotate) {
     // Only auto-rotate if FPS mode is off
@@ -306,47 +363,91 @@ function render(): void {
     satelliteTransform.setRotation(0, time * 100, 0);
   }
 
-  // Clear screen
-  renderer.clear();
+  // Ensure aspect ratios are correct every frame (or on change)
+  const aspect = typedCanvas.width / typedCanvas.height;
+  camera.setAspect(aspect);
+  gameCamera.setAspect(aspect);
 
-  // Set uniforms
-  shader.use();
-  
-  // MVP matrices are set by Scene.render() for each object.
-  // We don't need to set u_model locally anymore.
-  
-  // BUT proper lighting setup is still needed globally or per object?
-  // The current shader setup logic is mixed. Let's keep global lighting setup here.
+  // Common Uniforms function
+  const setUniforms = (cam: Camera): void => {
+    renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height); // Default full
+    shader.use();
 
+    // Lighting
+    const lightData = light.getUniformData();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    shader.setVec3Array('u_lightDirection', lightData.direction as Float32Array);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    shader.setVec3Array('u_lightColor', lightData.color as Float32Array);
+    shader.setFloat('u_ambientStrength', controls.params.lighting.ambientStrength);
 
+    shader.setFloat('u_specularStrength', controls.params.lighting.specularStrength);
+    shader.setFloat('u_shininess', controls.params.lighting.shininess);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    shader.setVec3Array('u_viewPos', cam.position as Float32Array);
 
-  // Set lighting uniforms
-  const lightData = light.getUniformData();
-  // gl-matrix vec3 is compatible with Float32Array
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  shader.setVec3Array('u_lightDirection', lightData.direction as Float32Array);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  shader.setVec3Array('u_lightColor', lightData.color as Float32Array);
-  shader.setFloat('u_ambientStrength', controls.params.lighting.ambientStrength);
+    const pointLightData = pointLight.getUniformData();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    shader.setVec3Array('u_pointLightPos', pointLightData.position as Float32Array);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    shader.setVec3Array('u_pointLightColor', pointLightData.color as Float32Array);
+    shader.setFloat('u_pointLightConstant', pointLightData.constant);
+    shader.setFloat('u_pointLightLinear', pointLightData.linear);
+    shader.setFloat('u_pointLightQuadratic', pointLightData.quadratic);
+  };
 
-  // Set specular uniforms
-  shader.setFloat('u_specularStrength', controls.params.lighting.specularStrength);
-  shader.setFloat('u_shininess', controls.params.lighting.shininess);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  shader.setVec3Array('u_viewPos', camera.position as Float32Array);
+  // RENDER LOGIC
+  renderer.setScissorTest(false); // Default disable
 
-  // Set point light uniforms
-  const pointLightData = pointLight.getUniformData();
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  shader.setVec3Array('u_pointLightPos', pointLightData.position as Float32Array);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  shader.setVec3Array('u_pointLightColor', pointLightData.color as Float32Array);
-  shader.setFloat('u_pointLightConstant', pointLightData.constant);
-  shader.setFloat('u_pointLightLinear', pointLightData.linear);
-  shader.setFloat('u_pointLightQuadratic', pointLightData.quadratic);
+  if (currentViewMode === 'engine') {
+    // --- ENGINE VIEW (Full) ---
+    renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height);
+    renderer.setClearColor(0, 0, 0, 1); // Black background
+    renderer.clear();
+    setUniforms(camera);
+    scene.render(gl, shader, camera);
 
-  // Render Scene
-  scene.render(gl, shader, camera);
+  } else if (currentViewMode === 'game') {
+    // --- GAME VIEW (Full) ---
+    renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height);
+    renderer.setClearColor(0.1, 0.1, 0.2, 1); // Slight blue tint for game view
+    renderer.clear();
+    setUniforms(gameCamera);
+    scene.render(gl, shader, gameCamera);
+
+  } else if (currentViewMode === 'split') {
+    // --- SPLIT VIEW ---
+    const halfWidth = typedCanvas.width / 2;
+    const height = typedCanvas.height;
+
+    // enable scissor test
+    renderer.setScissorTest(true);
+
+    // 1. LEFT SIDE (Engine View)
+    renderer.setViewport(0, 0, halfWidth, height);
+    renderer.setScissor(0, 0, halfWidth, height);
+    renderer.setClearColor(0, 0, 0, 1);
+    renderer.clear();
+    
+    // Update aspect for split view
+    camera.setAspect(halfWidth / height);
+    setUniforms(camera);
+    scene.render(gl, shader, camera);
+
+    // 2. RIGHT SIDE (Game View)
+    renderer.setViewport(halfWidth, 0, halfWidth, height);
+    renderer.setScissor(halfWidth, 0, halfWidth, height);
+    renderer.setClearColor(0.1, 0.1, 0.2, 1);
+    renderer.clear();
+
+    // Update aspect for split view
+    gameCamera.setAspect(halfWidth / height);
+    setUniforms(gameCamera); 
+    scene.render(gl, shader, gameCamera);
+
+    // Restore scissors
+    renderer.setScissorTest(false);
+  }
 
   // Request next frame
   requestAnimationFrame(render);

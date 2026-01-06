@@ -35,11 +35,26 @@ export class WebGLRenderer {
     this.gl.clearColor(r, g, b, a);
   }
 
-  /**
-   * Set viewport
-   */
   setViewport(x: number, y: number, width: number, height: number): void {
     this.gl.viewport(x, y, width, height);
+  }
+
+  /**
+   * Set scissor box
+   */
+  setScissor(x: number, y: number, width: number, height: number): void {
+    this.gl.scissor(x, y, width, height);
+  }
+
+  /**
+   * Enable/Disable scissor test
+   */
+  setScissorTest(enable: boolean): void {
+    if (enable) {
+      this.gl.enable(this.gl.SCISSOR_TEST);
+    } else {
+      this.gl.disable(this.gl.SCISSOR_TEST);
+    }
   }
 
   /**

@@ -333,15 +333,18 @@
 - [x] Mutual exclusivity with auto-rotation
 **Status:** Fully integrated with UI controls. FirstPersonController code existed, now properly connected to main application.
 
-### Commit 14: Advanced Features (Not Started)
-- [ ] Skybox rendering
-- [ ] Post-processing effects
-- [ ] Shadow mapping (optional)
+### Commit 14: Dual Viewports (Bonus +25) ✅ **COMPLETE**
+- [x] Viewport Scissoring implementation
+- [x] Engine View (Free roaming)
+- [x] Game View (Game Camera)
+- [x] Split screen rendering loop (Bonus Compliance)
+- [x] Tabbed Interface (UI Polish)
+**Status:** Implemented Tabbed UI with 3 modes: Engine, Game, and Split View. Split View satisfies the "simultaneous rendering" requirement.
 
-### Commit 15: OBJ Loader Enhancement (Not Started)
-- [ ] Material (.mtl) parsing
-- [ ] Multi-object support
-- [ ] Optimization
+### Commit 15: Final Polish & UI Cleanup
+- [ ] Ensure all bonus features interact correctly
+- [ ] Code cleanup and comments
+- [ ] Final verification against PDF requirements
 
 ---
 
