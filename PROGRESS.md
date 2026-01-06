@@ -323,11 +323,14 @@
 
 ## 🚧 Remaining Work
 
-### Commit 12: First Person Controller (Not Started)
-- [ ] Mouse input handling
-- [ ] WASD movement
-- [ ] Camera orientation control
-- [ ] Pointer lock API
+### Commit 12: First Person Controller ✅ **COMPLETE**
+- [x] FPS controller integration into main.ts
+- [x] UI toggle for FPS mode
+- [x] WASD movement + Mouse look
+- [x] Pointer lock API
+- [x] Conditional UI (speed/sensitivity sliders)
+- [x] Mutual exclusivity with auto-rotation
+**Status:** Fully integrated with UI controls. FirstPersonController code existed, now properly connected to main application.
 
 ### Commit 14: Advanced Features (Not Started)
 - [ ] Skybox rendering
