@@ -74,6 +74,16 @@ export class Scene {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       shader.setMat3('u_normalMatrix', obj.transform.getNormalMatrix() as Float32Array);
 
+      // Bind texture if available
+      if (obj.mesh.texture) {
+        shader.setInt('u_useTexture', 1);
+        shader.setInt('u_texture', 0);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, obj.mesh.texture);
+      } else {
+        shader.setInt('u_useTexture', 0);
+      }
+
       // Render the mesh
       obj.mesh.render(gl);
     });

@@ -318,11 +318,7 @@ function render(): void {
   // BUT proper lighting setup is still needed globally or per object?
   // The current shader setup logic is mixed. Let's keep global lighting setup here.
 
-  if (controls.params.geometry.type !== 'Prism (Hexagon)' && controls.params.geometry.type !== 'Prism (Triangle)') {
-    shader.setInt('u_useTexture', 1);
-  } else {
-    shader.setInt('u_useTexture', 0);
-  }
+
 
   // Set lighting uniforms
   const lightData = light.getUniformData();
