@@ -31,9 +31,24 @@ const typedCanvas = canvas; // Type narrowed to HTMLCanvasElement
 function resizeCanvas(): void {
   typedCanvas.width = window.innerWidth;
   typedCanvas.height = window.innerHeight;
+  
+  // Only update cameras if they exist (after initialization)
+  if (camera && gameCamera && renderer) {
+    renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height);
+    
+    // Only update aspect ratios if NOT in split view
+    // Split view sets its own aspect ratios per viewport in render loop
+    if (currentViewMode !== 'split') {
+      const fullAspect = typedCanvas.width / typedCanvas.height;
+      camera.setAspect(fullAspect);
+      gameCamera.setAspect(fullAspect);
+    }
+  }
 }
 
-resizeCanvas();
+// Initial resize (without camera updates)
+typedCanvas.width = window.innerWidth;
+typedCanvas.height = window.innerHeight;
 
 console.log('Canvas initialized:', typedCanvas.width, 'x', typedCanvas.height);
 
@@ -50,12 +65,6 @@ const camera = new Camera(75, typedCanvas.width / typedCanvas.height, 0.1, 100);
 camera.setPosition(0, 0, 5);
 camera.setTarget(0, 0, 0);
 console.log('Camera initialized');
-
-// Update camera on resize
-window.addEventListener('resize', () => {
-  resizeCanvas();
-  camera.setAspect(typedCanvas.width / typedCanvas.height);
-});
 
 // Create Blinn-Phong shader
 const shader = new Shader(gl, phongVertexShader, phongFragmentShader);
@@ -151,9 +160,23 @@ const controls = new SceneControls({
 // FPS Controller (initially null)
 let fpsController: FirstPersonController | null = null;
 
-// Canvas click handler for pointer lock (only active when FPS mode is enabled)
-const canvasClickHandler = (): void => {
-  void typedCanvas.requestPointerLock();
+// Canvas click handler for pointer lock (only active when FPS mode is enabled AND in correct view)
+const canvasClickHandler = (event: MouseEvent): void => {
+  // Only lock pointer if:
+  // 1. In Engine View (full) OR
+  // 2. In Split View AND clicked on the LEFT half (Engine side)
+  if (currentViewMode === 'engine') {
+    void typedCanvas.requestPointerLock();
+  } else if (currentViewMode === 'split') {
+    // Check if click is on the left half
+    const canvasRect = typedCanvas.getBoundingClientRect();
+    const clickX = event.clientX - canvasRect.left;
+    const halfWidth = canvasRect.width / 2;
+    if (clickX < halfWidth) {
+      void typedCanvas.requestPointerLock();
+    }
+  }
+  // Do nothing in Game View or if clicked on right side of Split View
 };
 
 // Update scene when controls change
@@ -280,6 +303,17 @@ controls.onChange(() => {
 
 console.log('UI controls created');
 
+// Create Game Camera (Fixed View) - MUST be after main camera
+const gameCamera = new Camera(60, typedCanvas.width / typedCanvas.height, 0.1, 100);
+gameCamera.setPosition(10, 10, 10);
+gameCamera.setTarget(0, 0, 0);
+console.log('Game Camera initialized');
+
+// Now we can safely add resize listener that uses cameras
+window.addEventListener('resize', () => {
+  resizeCanvas();
+});
+
 // View Modes
 type ViewMode = 'engine' | 'game' | 'split';
 let currentViewMode: ViewMode = 'engine';
@@ -288,12 +322,6 @@ let currentViewMode: ViewMode = 'engine';
 const tabEngine = document.getElementById('tab-engine');
 const tabGame = document.getElementById('tab-game');
 const tabSplit = document.getElementById('tab-split');
-
-// Create Game Camera (Fixed View)
-const gameCamera = new Camera(60, typedCanvas.width / typedCanvas.height, 0.1, 100);
-gameCamera.setPosition(10, 10, 10);
-gameCamera.setTarget(0, 0, 0);
-console.log('Game Camera initialized');
 
 // Tab Switching Logic
 function setViewMode(mode: ViewMode): void {
@@ -328,15 +356,6 @@ tabEngine?.addEventListener('click', () => setViewMode('engine'));
 tabGame?.addEventListener('click', () => setViewMode('game'));
 tabSplit?.addEventListener('click', () => setViewMode('split'));
 
-// Update camera on resize (modified for split screen)
-window.addEventListener('resize', () => {
-    resizeCanvas();
-});
-
-// Modified resizeCanvas to handle split aspect ratio if needed
-// We'll stick to the original resize logic which sets canvas size.
-// Aspect ratio updates happen in the render loop or separate handler.
-
 // Animation
 let time = 0;
 let lastFrameTime = performance.now();
@@ -347,8 +366,8 @@ function render(): void {
   const deltaTime = (currentTime - lastFrameTime) / 1000; // Convert to seconds
   lastFrameTime = currentTime;
   
-  // Update FPS controller if active AND in Engine View
-  if (currentViewMode === 'engine' && fpsController) {
+  // Update FPS controller if active AND in Engine or Split View
+  if ((currentViewMode === 'engine' || currentViewMode === 'split') && fpsController) {
     fpsController.update(deltaTime);
   } else if (controls.params.animation.autoRotate) {
     // Only auto-rotate if FPS mode is off
@@ -359,14 +378,9 @@ function render(): void {
       0
     );
     
-    // Satellite local rotation (spinning on its own axis)
+  // Satellite local rotation (spinning on its own axis)
     satelliteTransform.setRotation(0, time * 100, 0);
   }
-
-  // Ensure aspect ratios are correct every frame (or on change)
-  const aspect = typedCanvas.width / typedCanvas.height;
-  camera.setAspect(aspect);
-  gameCamera.setAspect(aspect);
 
   // Common Uniforms function
   const setUniforms = (cam: Camera): void => {
@@ -424,13 +438,14 @@ function render(): void {
     renderer.setScissorTest(true);
 
     // 1. LEFT SIDE (Engine View)
+    const splitAspect = halfWidth / height;
     renderer.setViewport(0, 0, halfWidth, height);
     renderer.setScissor(0, 0, halfWidth, height);
     renderer.setClearColor(0, 0, 0, 1);
     renderer.clear();
     
-    // Update aspect for split view
-    camera.setAspect(halfWidth / height);
+    // Set aspect for this specific viewport
+    camera.setAspect(splitAspect);
     setUniforms(camera);
     scene.render(gl, shader, camera);
 
@@ -440,8 +455,8 @@ function render(): void {
     renderer.setClearColor(0.1, 0.1, 0.2, 1);
     renderer.clear();
 
-    // Update aspect for split view
-    gameCamera.setAspect(halfWidth / height);
+    // Set aspect for this specific viewport
+    gameCamera.setAspect(splitAspect);
     setUniforms(gameCamera); 
     scene.render(gl, shader, gameCamera);
 
