@@ -113,8 +113,8 @@ export class FirstPersonController {
     const movementX = event.movementX ?? 0;
     const movementY = event.movementY ?? 0;
 
-    this.yaw -= movementX * this.mouseSensitivity;
-    this.pitch -= movementY * this.mouseSensitivity;
+    this.yaw += movementX * this.mouseSensitivity;
+    this.pitch += movementY * this.mouseSensitivity;
 
     // Clamp pitch to prevent gimbal lock
     const maxPitch = Math.PI / 2 - 0.01;
