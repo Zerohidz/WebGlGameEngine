@@ -7,6 +7,8 @@ import { Transform } from './engine/Transform';
 import { Mesh } from './geometry/Mesh';
 import { Cube } from './geometry/Cube';
 import { Sphere } from './geometry/Sphere';
+import { Cylinder } from './geometry/Cylinder';
+import { Prism } from './geometry/Prism';
 import { DirectionalLight } from './lighting/DirectionalLight';
 import { PointLight } from './lighting/PointLight';
 import { phongVertexShader, phongFragmentShader } from './shaders/phong';
@@ -69,14 +71,17 @@ const pointLightColor = vec3.fromValues(1, 1, 1); // White light
 const pointLight = new PointLight(pointLightPosition, pointLightColor, 1.0);
 console.log('Point light created');
 
-// Create cube mesh
+// Create all geometries
 const cubeGeometry = Cube.create(gl, 1.0);
 const sphereGeometry = Sphere.create(gl, 1.0, 32, 16);
+const cylinderGeometry = Cylinder.create(gl, 0.5, 2.0, 32);
+const prismTriangleGeometry = Prism.create(gl, 0.7, 2.0, 3);
+const prismHexagonGeometry = Prism.create(gl, 0.7, 2.0, 6);
 let currentGeometry = cubeGeometry;
-const cubeTransform = new Transform();
-cubeTransform.setPosition(0, 0, 0);
-let mesh = new Mesh(currentGeometry, cubeTransform);
-console.log('Geometries created (Cube and Sphere)');
+const meshTransform = new Transform();
+meshTransform.setPosition(0, 0, 0);
+let mesh = new Mesh(currentGeometry, meshTransform);
+console.log('Geometries created (Cube, Sphere, Cylinder, Prism x2)');
 
 // Create UI controls
 const controls = new SceneControls({
@@ -152,12 +157,27 @@ controls.onChange(() => {
   if (controls.params.geometry.type === 'Cube') {
     if (currentGeometry !== cubeGeometry) {
       currentGeometry = cubeGeometry;
-      mesh = new Mesh(currentGeometry, cubeTransform);
+      mesh = new Mesh(currentGeometry, meshTransform);
     }
   } else if (controls.params.geometry.type === 'Sphere') {
     if (currentGeometry !== sphereGeometry) {
       currentGeometry = sphereGeometry;
-      mesh = new Mesh(currentGeometry, cubeTransform);
+      mesh = new Mesh(currentGeometry, meshTransform);
+    }
+  } else if (controls.params.geometry.type === 'Cylinder') {
+    if (currentGeometry !== cylinderGeometry) {
+      currentGeometry = cylinderGeometry;
+      mesh = new Mesh(currentGeometry, meshTransform);
+    }
+  } else if (controls.params.geometry.type === 'Prism (Triangle)') {
+    if (currentGeometry !== prismTriangleGeometry) {
+      currentGeometry = prismTriangleGeometry;
+      mesh = new Mesh(currentGeometry, meshTransform);
+    }
+  } else if (controls.params.geometry.type === 'Prism (Hexagon)') {
+    if (currentGeometry !== prismHexagonGeometry) {
+      currentGeometry = prismHexagonGeometry;
+      mesh = new Mesh(currentGeometry, meshTransform);
     }
   }
 });
@@ -174,7 +194,7 @@ function render(): void {
   if (controls.params.animation.autoRotate) {
     time += deltaTime;
     // Rotate mesh on X and Y axes
-    cubeTransform.setRotation(
+    meshTransform.setRotation(
       time * controls.params.animation.rotationSpeedX,
       time * controls.params.animation.rotationSpeedY,
       0
@@ -195,7 +215,7 @@ function render(): void {
   // Set normal matrix
   // gl-matrix mat3 is compatible with Float32Array
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  shader.setMat3('u_normalMatrix', cubeTransform.getNormalMatrix() as Float32Array);
+  shader.setMat3('u_normalMatrix', meshTransform.getNormalMatrix() as Float32Array);
 
   // Set lighting uniforms
   const lightData = light.getUniformData();

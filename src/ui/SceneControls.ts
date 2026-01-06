@@ -31,7 +31,7 @@ export interface ControlParams {
     rotationSpeedY: number;
   };
   geometry: {
-    type: string; // 'Cube' or 'Sphere'
+    type: string; // 'Cube' | 'Sphere' | 'Cylinder' | 'Prism (Triangle)' | 'Prism (Hexagon)'
   };
 }
 
@@ -215,7 +215,13 @@ export class SceneControls {
     const geometryFolder = this.gui.addFolder('Geometry');
 
     geometryFolder
-      .add(this.params.geometry, 'type', ['Cube', 'Sphere'])
+      .add(this.params.geometry, 'type', [
+        'Cube', 
+        'Sphere', 
+        'Cylinder', 
+        'Prism (Triangle)', 
+        'Prism (Hexagon)'
+      ])
       .name('Type')
       .onChange(() => this.triggerChange());
 
