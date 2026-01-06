@@ -78,6 +78,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unnecessary-type-parameters': 'off',
       '@typescript-eslint/no-unnecessary-type-arguments': 'warn',
       '@typescript-eslint/no-confusing-void-expression': 'off',
+      '@typescript-eslint/no-extraneous-class': 'off',
     },
   }
 );

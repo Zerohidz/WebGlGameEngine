@@ -1,8 +1,22 @@
+import type { Mesh } from '../geometry/Mesh';
+import type { Transform } from './Transform';
+import type { Shader } from './Shader';
+import type { Camera } from './Camera';
+
+/**
+ * Scene object entry
+ */
+interface SceneObject {
+  name: string;
+  mesh: Mesh;
+  transform: Transform;
+}
+
 /**
  * Scene graph for managing multiple objects
  */
 export class Scene {
-  private objects: Array<{ name: string; mesh: any; transform: any }>;
+  private objects: SceneObject[];
 
   constructor() {
     this.objects = [];
@@ -11,7 +25,7 @@ export class Scene {
   /**
    * Add an object to the scene
    */
-  addObject(name: string, mesh: any, transform: any): void {
+  addObject(name: string, mesh: Mesh, transform: Transform): void {
     this.objects.push({ name, mesh, transform });
   }
 
@@ -28,14 +42,14 @@ export class Scene {
   /**
    * Get an object by name
    */
-  getObject(name: string): { name: string; mesh: any; transform: any } | undefined {
+  getObject(name: string): SceneObject | undefined {
     return this.objects.find(obj => obj.name === name);
   }
 
   /**
    * Get all objects in the scene
    */
-  getAllObjects(): Array<{ name: string; mesh: any; transform: any }> {
+  getAllObjects(): SceneObject[] {
     return this.objects;
   }
 
@@ -49,7 +63,7 @@ export class Scene {
   /**
    * Render all objects in the scene
    */
-  render(gl: WebGL2RenderingContext, shader: any, camera: any): void {
+  render(gl: WebGL2RenderingContext, shader: Shader, camera: Camera): void {
     this.objects.forEach(obj => {
       // Set MVP matrices for this object
       shader.setMat4('u_model', obj.mesh.getModelMatrix());
