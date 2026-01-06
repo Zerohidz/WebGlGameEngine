@@ -14,6 +14,7 @@ import { PointLight } from './lighting/PointLight';
 import { phongVertexShader, phongFragmentShader } from './shaders/phong';
 import { SceneControls } from './ui/SceneControls';
 import { FirstPersonController } from './controllers/FirstPersonController';
+import { OrbitController } from './controllers/OrbitController';
 import { Scene } from './engine/Scene';
 
 console.log('WebGL2 Game Engine - Starting...');
@@ -151,6 +152,9 @@ const controls = new SceneControls({
 
 // FPS Controller (initially null)
 let fpsController: FirstPersonController | null = null;
+
+// Orbit Controller for Game View (initially null)
+let orbitController: OrbitController | null = null;
 
 // Canvas click handler for pointer lock (only active when FPS mode is enabled AND in correct view)
 const canvasClickHandler = (event: MouseEvent): void => {
@@ -301,6 +305,10 @@ gameCamera.setPosition(10, 10, 10);
 gameCamera.setTarget(0, 0, 0);
 console.log('Game Camera initialized');
 
+// Create Orbit Controller for Game View
+orbitController = new OrbitController(gameCamera, typedCanvas);
+console.log('Orbit Controller initialized for Game View');
+
 
 function resizeCanvas(): void {
   typedCanvas.width = window.innerWidth;
@@ -335,20 +343,10 @@ function setViewMode(mode: ViewMode): void {
   tabGame?.classList.toggle('active', mode === 'game');
   tabSplit?.classList.toggle('active', mode === 'split');
 
-  // Handle FPS Controller state
-  if (mode === 'engine') {
-    // If returning to engine view, we might want to re-enable capabilities but NOT auto-lock
-    // The user still needs to click to lock.
-  } else {
-    // Force exit FPS mode if switching away
-    if (fpsController) {
-      document.exitPointerLock();
-      controls.params.controls.fpsMode = false;
-      // We need to manually trigger the "disable" logic which is currently inside controls.onChange logic
-      // Ideally we should refactor that, but for now let's just forcefully null it and remove listeners if we could access them.
-      // Better approach: simulate the control change or just rely on the render loop check.
-      // But we must stop the controller from updating.
-    }
+  // Handle FPS Controller state when switching away from Engine view
+  if (mode !== 'engine' && fpsController) {
+    document.exitPointerLock();
+    controls.params.controls.fpsMode = false;
   }
 
   // Update aspect ratios immediately when switching modes
