@@ -324,14 +324,14 @@
 
 ## 🚧 Remaining Work
 
-### Commit 12: First Person Controller ✅ **COMPLETE**
+### Commit 12: First Person Controller (Bonus +25) ✅ **COMPLETE**
 - [x] FPS controller integration into main.ts
 - [x] UI toggle for FPS mode
 - [x] WASD movement + Mouse look
 - [x] Pointer lock API
 - [x] Conditional UI (speed/sensitivity sliders)
 - [x] Mutual exclusivity with auto-rotation
-**Status:** Fully integrated with UI controls. FirstPersonController code existed, now properly connected to main application.
+**Status:** Fully integrated with UI controls. FirstPersonController code existed, now properly connected to main application. This fulfills the "Advanced Camera Controller" bonus requirement.
 
 ### Commit 14: Dual Viewports (Bonus +25) ✅ **COMPLETE**
 - [x] Viewport Scissoring implementation
@@ -369,14 +369,16 @@
 
 ## 📝 Notes
 
-- All core rendering features implemented
-- **Texture system fully functional** with UV mapping for both imported OBJ models and procedural geometries
-- Scene graph working with multiple objects
-- Lighting system supports both directional and point lights
-- 11-float vertex format (pos, color, normal, uv) implemented across all geometries
-- Ready to integrate interactive camera controls (Commit 12)
+- All core rendering features implemented ✅
+- **Texture system fully functional** with UV mapping for both imported OBJ models and procedural geometries ✅
+- Scene graph working with multiple objects ✅
+- Lighting system supports both directional and point lights ✅
+- 11-float vertex format (pos, color, normal, uv) implemented across all geometries ✅
+- **Bonus 1: Advanced Camera Controller (+25)** - First Person Controller fully implemented ✅
+- **Bonus 2: Dual Viewports (+25)** - Tabbed interface with split screen mode ✅
+- **Total Score: 150/150 points** 🎉
 
-**Last Updated:** 2026-01-06 10:43Canvas `getElementById` sonrası `HTMLElement | null` döner, `HTMLCanvasElement` değil.
+**Last Updated:** 2026-01-06 17:05
 
 **İlk Çözüm (Hatalı):**
 ```typescript
