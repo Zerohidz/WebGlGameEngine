@@ -212,7 +212,12 @@ controls.onChange(() => {
 
   // Update camera
   camera.setFOV(controls.params.camera.fov);
-  camera.setPosition(0, 0, controls.params.camera.distance);
+  
+  // Only reset camera position if NOT using FPS or Orbit controller
+  // Those controllers manage camera position themselves
+  if (controls.params.controls.cameraMode === 'None') {
+    camera.setPosition(0, 0, controls.params.camera.distance);
+  }
   
   // Update projection mode
   const newMode = controls.params.camera.projectionMode === 'Perspective' 
