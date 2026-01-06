@@ -312,12 +312,13 @@
 - [x] Multi-light support in shaders
 **Status:** Fully implemented in Commit 6, integrated in main.ts
 
-### Commit 13: Scene Graph ⚠️ **CODE EXISTS BUT NOT INTEGRATED**
-- [x] Scene class exists
-- [ ] Integration in main.ts
-- [x] Object hierarchy management (code ready)
-- [x] Parent-child transforms (code ready)
-**Status:** Scene.ts exists and tested in main-test.ts, but main.ts doesn't use it
+### Commit 13: Scene Graph ✅ **COMPLETE**
+- [x] Scene class integration
+- [x] Hierarchical Transforms (Parent/Child)
+- [x] Recursive World Matrix calculation
+- [x] Integration in main.ts with `scene.render()`
+- [x] Satellite demo (orbiting object)
+**Status:** Fully implemented. Transform class rewritten to support hierarchy. Satellite object demonstrates parent-child relationship.
 
 ---
 
