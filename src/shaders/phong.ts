@@ -5,6 +5,7 @@ precision highp float;
 layout(location = 0) in vec3 a_position;
 layout(location = 1) in vec3 a_color;
 layout(location = 2) in vec3 a_normal;
+layout(location = 3) in vec2 a_uv;
 
 uniform mat4 u_model;
 uniform mat4 u_view;
@@ -14,6 +15,7 @@ uniform mat3 u_normalMatrix;
 out vec3 v_fragPos;
 out vec3 v_normal;
 out vec3 v_color;
+out vec2 v_uv;
 
 void main() {
   // Transform position to world space
@@ -24,9 +26,10 @@ void main() {
   
   // Pass color to fragment shader
   v_color = a_color;
+  v_uv = a_uv;
   
   // Final position
-  gl_Position = u_projection * u_view * vec4(v_fragPos, 1.0);
+  gl_Position = u_projection * u_view * u_model * vec4(a_position, 1.0);
 }
 `;
 
@@ -36,6 +39,7 @@ precision highp float;
 in vec3 v_fragPos;
 in vec3 v_normal;
 in vec3 v_color;
+in vec2 v_uv;
 
 // Directional light uniforms
 uniform vec3 u_lightDirection;
@@ -54,11 +58,18 @@ uniform float u_pointLightConstant;
 uniform float u_pointLightLinear;
 uniform float u_pointLightQuadratic;
 
+// Texture uniforms
+uniform sampler2D u_texture;
+uniform bool u_useTexture;
+
 out vec4 fragColor;
 
 void main() {
   vec3 norm = normalize(v_normal);
   vec3 viewDir = normalize(u_viewPos - v_fragPos);
+  
+  // Get base color (from texture or vertex color)
+  vec3 baseColor = u_useTexture ? texture(u_texture, v_uv).rgb : v_color;
   
   // === Ambient lighting ===
   vec3 ambient = u_ambientStrength * u_lightColor;
@@ -94,8 +105,7 @@ void main() {
   vec3 specular_point = u_specularStrength * spec_point * u_pointLightColor * attenuation;
   
   // === Combine all lighting ===
-  vec3 result = (ambient + diffuse_dir + specular_dir + diffuse_point + specular_point) * v_color;
+  vec3 result = (ambient + diffuse_dir + specular_dir + diffuse_point + specular_point) * baseColor;
   fragColor = vec4(result, 1.0);
 }
 `;
-

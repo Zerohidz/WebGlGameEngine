@@ -43,9 +43,19 @@ export class Geometry {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
+    // Create Index Buffer Object (IBO)
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    const ibo = gl.createBuffer();
+    if (ibo === null) {
+      throw new Error('Failed to create IBO');
+    }
+    this.ibo = ibo;
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
     // Vertex attribute layout (interleaved):
-    // Position (3 floats) + Color (3 floats) + Normal (3 floats) = 9 floats per vertex
-    const stride = 9 * Float32Array.BYTES_PER_ELEMENT;
+    // Position (3 floats) + Color (3 floats) + Normal (3 floats) + UV (2 floats) = 11 floats per vertex
+    const stride = 11 * Float32Array.BYTES_PER_ELEMENT;
 
     // Position attribute (location 0)
     gl.enableVertexAttribArray(0);
@@ -73,15 +83,16 @@ export class Geometry {
       6 * Float32Array.BYTES_PER_ELEMENT
     );
 
-    // Create Index Buffer Object (IBO)
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-    const ibo = gl.createBuffer();
-    if (ibo === null) {
-      throw new Error('Failed to create IBO');
-    }
-    this.ibo = ibo;
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+    // UV attribute (location 3)
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(
+      3,
+      2,
+      gl.FLOAT,
+      false,
+      stride,
+      9 * Float32Array.BYTES_PER_ELEMENT
+    );
 
     // Unbind
     gl.bindVertexArray(null);
