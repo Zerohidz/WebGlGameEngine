@@ -23,6 +23,8 @@ export interface ControlParams {
   camera: {
     fov: number;
     distance: number;
+    projectionMode: string; // 'Perspective' | 'Orthographic'
+    orthoSize: number;
   };
   animation: {
     speed: number;
@@ -166,15 +168,53 @@ export class SceneControls {
   private setupCameraControls(): void {
     const cameraFolder = this.gui.addFolder('Camera');
 
+    // Projection mode dropdown
     cameraFolder
+      .add(this.params.camera, 'projectionMode', ['Perspective', 'Orthographic'])
+      .name('Projection Mode')
+      .onChange(() => this.triggerChange());
+
+    // FOV control (only for perspective)
+    const fovControl = cameraFolder
       .add(this.params.camera, 'fov', 30, 120, 1)
       .name('FOV (degrees)')
       .onChange(() => this.triggerChange());
 
+    // Ortho size control (only for orthographic)
+    const orthoControl = cameraFolder
+      .add(this.params.camera, 'orthoSize', 1, 20, 0.5)
+      .name('Ortho Size')
+      .onChange(() => this.triggerChange());
+
+    // Distance control (for both modes)
     cameraFolder
       .add(this.params.camera, 'distance', 2, 20, 0.5)
       .name('Distance')
       .onChange(() => this.triggerChange());
+
+    // Update visibility based on projection mode
+    const updateControlVisibility = (): void => {
+      const isPerspective = this.params.camera.projectionMode === 'Perspective';
+      if (isPerspective) {
+        fovControl.show();
+        orthoControl.hide();
+      } else {
+        fovControl.hide();
+        orthoControl.show();
+      }
+    };
+
+    // Initial visibility
+    updateControlVisibility();
+
+    // Update on mode change
+    cameraFolder
+      .controllers
+      .find(c => c.property === 'projectionMode')
+      ?.onChange(() => {
+        updateControlVisibility();
+        this.triggerChange();
+      });
 
     cameraFolder.open();
   }

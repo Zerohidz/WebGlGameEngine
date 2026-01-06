@@ -2,7 +2,7 @@ import { vec3 } from 'gl-matrix';
 import { createWebGL2Context } from './utils/GLUtils';
 import { WebGLRenderer } from './engine/WebGLRenderer';
 import { Shader } from './engine/Shader';
-import { Camera } from './engine/Camera';
+import { Camera, ProjectionMode } from './engine/Camera';
 import { Transform } from './engine/Transform';
 import { Mesh } from './geometry/Mesh';
 import { Cube } from './geometry/Cube';
@@ -111,6 +111,8 @@ const controls = new SceneControls({
   camera: {
     fov: 75,
     distance: 5,
+    projectionMode: 'Perspective',
+    orthoSize: 5,
   },
   animation: {
     speed: 1.0,
@@ -159,6 +161,13 @@ controls.onChange(() => {
   // Update camera
   camera.setFOV(controls.params.camera.fov);
   camera.setPosition(0, 0, controls.params.camera.distance);
+  
+  // Update projection mode
+  const newMode = controls.params.camera.projectionMode === 'Perspective' 
+    ? ProjectionMode.PERSPECTIVE 
+    : ProjectionMode.ORTHOGRAPHIC;
+  camera.setProjectionMode(newMode);
+  camera.setOrthoSize(controls.params.camera.orthoSize);
 
   // Update geometry if type changed
   if (controls.params.geometry.type === 'Cube') {
