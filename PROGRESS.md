@@ -297,10 +297,14 @@
 - [x] Integration into `main.ts` with texture loading
 - [x] Browser verification with hat model + texture.png
 
-### Commit 10: Camera Improvements ❌ **NOT IMPLEMENTED**
-- [ ] Perspective/Orthographic toggle
-- [ ] Camera controls (UI integration needed)
-**Issues:** Camera class only supports perspective projection. No orthographic mode exists.
+### Commit 10: Camera Improvements ✅ **COMPLETE**
+- [x] Perspective/Orthographic toggle
+- [x] Camera projection mode UI controls
+- [x] Conditional UI visibility (FOV vs Ortho Size)
+- [x] `ProjectionMode` enum in Camera class
+- [x] `setProjectionMode()` and `setOrthoSize()` methods
+- [x] Integration in main.ts
+**Status:** Fully implemented with browser verification. Projection mode switching works seamlessly.
 
 ### Commit 11: Point Light ✅ **COMPLETE**
 - [x] PointLight class
