@@ -27,7 +27,7 @@ export class Mesh {
    * Get the model matrix from the transform
    */
   getModelMatrix(): mat4 {
-    return this.transform.getModelMatrix();
+    return this.transform.getWorldMatrix();
   }
 
   /**

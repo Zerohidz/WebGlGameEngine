@@ -14,6 +14,7 @@ import { PointLight } from './lighting/PointLight';
 import { phongVertexShader, phongFragmentShader } from './shaders/phong';
 import { SceneControls } from './ui/SceneControls';
 import { FirstPersonController } from './controllers/FirstPersonController';
+import { Scene } from './engine/Scene';
 
 console.log('WebGL2 Game Engine - Starting...');
 
@@ -79,16 +80,32 @@ const cylinderGeometry = Cylinder.create(gl, 0.5, 2.0, 32);
 const prismTriangleGeometry = Prism.create(gl, 0.7, 2.0, 3);
 const prismHexagonGeometry = Prism.create(gl, 0.7, 2.0, 6);
 let currentGeometry = cubeGeometry;
+// Create scene
+const scene = new Scene();
+
+// Main object
 const meshTransform = new Transform();
 meshTransform.setPosition(0, 0, 0);
 let mesh = new Mesh(currentGeometry, meshTransform);
-console.log('Geometries created (Cube, Sphere, Cylinder, Prism x2)');
+scene.addObject('main', mesh, meshTransform);
+
+// Satellite object (Hierarchy Test)
+const satelliteTransform = new Transform();
+satelliteTransform.setPosition(2, 0, 0); // 2 units away from main
+satelliteTransform.setScale(0.3, 0.3, 0.3); // Smaller
+satelliteTransform.setParent(meshTransform); // Child of main object
+
+const satelliteMesh = new Mesh(sphereGeometry, satelliteTransform);
+scene.addObject('satellite', satelliteMesh, satelliteTransform);
+
+console.log('Scene graph initialized with Main Object and Satellite');
 
 // Load and apply texture
 import { TextureLoader } from './loaders/TextureLoader';
 TextureLoader.load(gl, '/models/texture.png').then(texture => {
   mesh.setTexture(texture);
-  console.log('Texture applied to mesh');
+  satelliteMesh.setTexture(texture); // Use same texture for satellite
+  console.log('Texture applied to meshes');
 });
 
 // Create UI controls
@@ -187,9 +204,6 @@ controls.onChange(() => {
   if (controls.params.geometry.type === 'Cube') {
     if (currentGeometry !== cubeGeometry) {
       currentGeometry = cubeGeometry;
-      const oldTexture = mesh.texture;
-      mesh = new Mesh(currentGeometry, meshTransform);
-      mesh.setTexture(oldTexture);
     }
   } else if (controls.params.geometry.type === 'Sphere') {
     if (currentGeometry !== sphereGeometry) {
@@ -215,10 +229,21 @@ controls.onChange(() => {
   } else if (controls.params.geometry.type === 'Prism (Hexagon)') {
     if (currentGeometry !== prismHexagonGeometry) {
       currentGeometry = prismHexagonGeometry;
+    }
+  }
+
+  // Update mesh geometry if changed
+  if (mesh.geometry !== currentGeometry) {
       const oldTexture = mesh.texture;
+      // Re-create mesh with new geometry but KEEP old transform
       mesh = new Mesh(currentGeometry, meshTransform);
       mesh.setTexture(oldTexture);
-    }
+      // Update scene object references
+      scene.removeObject('main');
+      scene.addObject('main', mesh, meshTransform);
+      
+      // Re-attach satellite if needed (transform ref is same so parent link implies)
+      // satelliteTransform.setParent(meshTransform); // Already set
   }
 
   // Handle FPS mode
@@ -271,36 +296,30 @@ function render(): void {
   } else if (controls.params.animation.autoRotate) {
     // Only auto-rotate if FPS mode is off
     time += 0.01 * controls.params.animation.speed;
-    // Rotate mesh on X and Y axes
     meshTransform.setRotation(
       time * controls.params.animation.rotationSpeedX,
       time * controls.params.animation.rotationSpeedY,
       0
     );
+    
+    // Satellite local rotation (spinning on its own axis)
+    satelliteTransform.setRotation(0, time * 100, 0);
   }
 
   // Clear screen
   renderer.clear();
 
-  // Use shader
+  // Set uniforms
   shader.use();
-
-  // Set MVP matrices
-  shader.setMat4('u_model', mesh.getModelMatrix());
-  shader.setMat4('u_view', camera.getViewMatrix());
-  shader.setMat4('u_projection', camera.getProjectionMatrix());
   
-  // Set normal matrix
-  // gl-matrix mat3 is compatible with Float32Array
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  shader.setMat3('u_normalMatrix', meshTransform.getNormalMatrix() as Float32Array);
+  // MVP matrices are set by Scene.render() for each object.
+  // We don't need to set u_model locally anymore.
+  
+  // BUT proper lighting setup is still needed globally or per object?
+  // The current shader setup logic is mixed. Let's keep global lighting setup here.
 
-  // Bind texture if available
-  if (mesh.texture) {
+  if (controls.params.geometry.type !== 'Prism (Hexagon)' && controls.params.geometry.type !== 'Prism (Triangle)') {
     shader.setInt('u_useTexture', 1);
-    shader.setInt('u_texture', 0);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, mesh.texture);
   } else {
     shader.setInt('u_useTexture', 0);
   }
@@ -330,8 +349,8 @@ function render(): void {
   shader.setFloat('u_pointLightLinear', pointLightData.linear);
   shader.setFloat('u_pointLightQuadratic', pointLightData.quadratic);
 
-  // Render mesh
-  mesh.render(gl);
+  // Render Scene
+  scene.render(gl, shader, camera);
 
   // Request next frame
   requestAnimationFrame(render);
