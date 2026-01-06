@@ -42,10 +42,8 @@ export class FirstPersonController {
     document.addEventListener('keydown', (e) => this.onKeyDown(e));
     document.addEventListener('keyup', (e) => this.onKeyUp(e));
 
-    // Mouse events
-    this.canvas.addEventListener('click', () => {
-      void this.canvas.requestPointerLock();
-    });
+    // NOTE: Canvas click for pointer lock is handled externally (in main.ts)
+    // to ensure it only activates when FPS mode is enabled
 
     document.addEventListener('pointerlockchange', () => {
       this.isPointerLocked = document.pointerLockElement === this.canvas;

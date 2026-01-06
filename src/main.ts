@@ -134,6 +134,11 @@ const controls = new SceneControls({
 // FPS Controller (initially null)
 let fpsController: FirstPersonController | null = null;
 
+// Canvas click handler for pointer lock (only active when FPS mode is enabled)
+const canvasClickHandler = (): void => {
+  void typedCanvas.requestPointerLock();
+};
+
 // Update scene when controls change
 controls.onChange(() => {
   // Update light direction
@@ -221,6 +226,8 @@ controls.onChange(() => {
     // Enable FPS mode
     if (!fpsController) {
       fpsController = new FirstPersonController(camera, typedCanvas);
+      // Add canvas click listener for pointer lock
+      typedCanvas.addEventListener('click', canvasClickHandler);
       console.log('FPS Controller enabled');
     }
     // Update controller settings
@@ -232,6 +239,12 @@ controls.onChange(() => {
     // Disable FPS mode
     if (fpsController) {
       fpsController = null;
+      // Remove canvas click listener
+      typedCanvas.removeEventListener('click', canvasClickHandler);
+      // Exit pointer lock if active
+      if (document.pointerLockElement === typedCanvas) {
+        document.exitPointerLock();
+      }
       // Reset camera to default position
       camera.setPosition(0, 0, controls.params.camera.distance);
       camera.setTarget(0, 0, 0);
