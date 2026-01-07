@@ -420,6 +420,7 @@ export class SceneControls {
     const objectListControl = objectsFolder
       .add(this.params.objects, 'selectedId', {})
       .name('Select Object')
+      .listen()
       .onChange(() => this.triggerChange());
 
     // Geometry type to add dropdown
@@ -508,42 +509,51 @@ export class SceneControls {
     positionFolder
       .add(this.params.objects.transform.position, 'x', -10, 10, 0.1)
       .name('X')
+      .listen()
       .onChange(() => this.triggerChange());
     positionFolder
       .add(this.params.objects.transform.position, 'y', -10, 10, 0.1)
       .name('Y')
+      .listen()
       .onChange(() => this.triggerChange());
     positionFolder
       .add(this.params.objects.transform.position, 'z', -10, 10, 0.1)
       .name('Z')
+      .listen()
       .onChange(() => this.triggerChange());
 
     const rotationFolder = transformFolder.addFolder('Rotation');
     rotationFolder
       .add(this.params.objects.transform.rotation, 'x', 0, 360, 1)
       .name('X (degrees)')
+      .listen()
       .onChange(() => this.triggerChange());
     rotationFolder
       .add(this.params.objects.transform.rotation, 'y', 0, 360, 1)
       .name('Y (degrees)')
+      .listen()
       .onChange(() => this.triggerChange());
     rotationFolder
       .add(this.params.objects.transform.rotation, 'z', 0, 360, 1)
       .name('Z (degrees)')
+      .listen()
       .onChange(() => this.triggerChange());
 
     const scaleFolder = transformFolder.addFolder('Scale');
     scaleFolder
       .add(this.params.objects.transform.scale, 'x', 0.1, 5, 0.1)
       .name('X')
+      .listen()
       .onChange(() => this.triggerChange());
     scaleFolder
       .add(this.params.objects.transform.scale, 'y', 0.1, 5, 0.1)
       .name('Y')
+      .listen()
       .onChange(() => this.triggerChange());
     scaleFolder
       .add(this.params.objects.transform.scale, 'z', 0.1, 5, 0.1)
       .name('Z')
+      .listen()
       .onChange(() => this.triggerChange());
 
     // Update dropdown options when object list changes

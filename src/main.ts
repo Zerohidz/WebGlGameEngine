@@ -196,16 +196,26 @@ const controls = new SceneControls(
       
       const objMesh = new Mesh(geometry, transform);
       
-      // Load default texture
-      void TextureLoader.load(gl, '/models/texture.png').then((texture) => {
-        objMesh.setTexture(texture);
-      }).catch(console.error);
-      
       const id = `obj_${Date.now()}`;
       scene.addObject(id, objMesh, transform);
       
       // Add to list
       controls.params.objects.list.push({ id, name, type: 'OBJ' });
+      
+      // Auto-select the new object
+      controls.params.objects.selectedId = id;
+      
+      // Sync UI transform params with new object's transform
+      controls.params.objects.transform.position.x = 0;
+      controls.params.objects.transform.position.y = 5;
+      controls.params.objects.transform.position.z = 0;
+      controls.params.objects.transform.rotation.x = 0;
+      controls.params.objects.transform.rotation.y = 0;
+      controls.params.objects.transform.rotation.z = 0;
+      controls.params.objects.transform.scale.x = 1;
+      controls.params.objects.transform.scale.y = 1;
+      controls.params.objects.transform.scale.z = 1;
+      
       controls.updateObjectList();
       
       console.log(`Successfully loaded ${name}`);

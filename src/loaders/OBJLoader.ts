@@ -87,18 +87,9 @@ export class OBJLoader {
     const vertexMap = new Map<string, number>(); // Map "v/vt/vn" -> vertex index
     let currentIndex = 0;
 
-    // Generate a simple color based on position
-    const getColorFromPosition = (pos: number[]): [number, number, number] => {
-      const x = pos[0] ?? 0;
-      const y = pos[1] ?? 0;
-      const z = pos[2] ?? 0;
-      
-      // Normalize to 0-1 range (assuming model is roughly in -1 to 1 range)
-      const r = (x + 1) / 2;
-      const g = (y + 1) / 2;
-      const b = (z + 1) / 2;
-      
-      return [r, g, b];
+    // Generate a simple color (solid light grey)
+    const getColorFromPosition = (_pos: number[]): [number, number, number] => {
+      return [0.7, 0.7, 0.7];
     };
 
     // Process faces
