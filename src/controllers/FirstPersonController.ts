@@ -47,6 +47,16 @@ export class FirstPersonController {
 
     document.addEventListener('pointerlockchange', () => {
       this.isPointerLocked = document.pointerLockElement === this.canvas;
+      
+      // Clear movement state when pointer lock is released (e.g., ESC pressed)
+      if (!this.isPointerLocked) {
+        this.moveForward = false;
+        this.moveBackward = false;
+        this.moveLeft = false;
+        this.moveRight = false;
+        this.moveUp = false;
+        this.moveDown = false;
+      }
     });
 
     document.addEventListener('mousemove', (e) => this.onMouseMove(e));
@@ -125,6 +135,11 @@ export class FirstPersonController {
    * Update camera position and rotation based on input
    */
   update(deltaTime: number): void {
+    // Only process movement when pointer is locked
+    if (!this.isPointerLocked) {
+      return;
+    }
+
     // Calculate forward and right vectors from yaw/pitch
     const forward = [
       Math.sin(this.yaw) * Math.cos(this.pitch),

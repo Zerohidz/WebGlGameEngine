@@ -150,7 +150,7 @@ const controls = new SceneControls({
     type: 'Cube',
   },
   controls: {
-    cameraMode: 'None', // 'None' | 'FPS' | 'Orbit'
+    cameraMode: 'FPS', // 'None' | 'FPS' | 'Orbit'
     movementSpeed: 5.0,
     mouseSensitivity: 0.002,
     orbitSensitivity: 0.005,
@@ -200,6 +200,7 @@ const canvasClickHandler = (event: MouseEvent): void => {
   }
   // Do nothing in Game View or if clicked on right side of Split View
 };
+
 
 function switchCameraMode(cameraMode: string) {
   switch (cameraMode) {
@@ -262,6 +263,9 @@ function switchCameraMode(cameraMode: string) {
       break;
   }
 }
+
+// Initialize camera mode (enable FPS by default)
+switchCameraMode(controls.params.controls.cameraMode);
 
 // Update scene when controls change
 controls.onChange(() => {
