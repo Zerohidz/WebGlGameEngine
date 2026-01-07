@@ -124,11 +124,12 @@ export class OBJLoader {
             const color = getColorFromPosition(pos);
             
             // Interleaved: [position(3), color(3), normal(3), uv(2)]
+            // Note: Flip V coordinate for OpenGL (1.0 - v)
             vertices.push(
               pos[0] ?? 0, pos[1] ?? 0, pos[2] ?? 0,
               color[0], color[1], color[2],
               normal[0] ?? 0, normal[1] ?? 0, normal[2] ?? 0,
-              uv[0] ?? 0, uv[1] ?? 0
+              uv[0] ?? 0, 1.0 - (uv[1] ?? 0) // Flip V coordinate
             );
             
             index = currentIndex++;

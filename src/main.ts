@@ -104,6 +104,32 @@ const tabSplit = document.getElementById('tab-split');
 
 // Load and apply texture
 import { TextureLoader } from './loaders/TextureLoader';
+import { OBJLoader } from './loaders/OBJLoader';
+
+// Load hat model
+let hatMesh: Mesh | null = null;
+OBJLoader.load(gl, '/models/model.obj').then(hatGeometry => {
+  const hatTransform = new Transform();
+  hatTransform.setPosition(3, 0, 0); // Position to the right of main cube
+  hatTransform.setScale(0.1, 0.1, 0.1); // Scale down significantly
+  hatMesh = new Mesh(hatGeometry, hatTransform);
+  
+  // Load and apply texture to hat
+  TextureLoader.load(gl, '/models/texture.png').then(hatTexture => {
+    if (hatMesh) {
+      hatMesh.setTexture(hatTexture);
+      scene.addObject('hat', hatMesh, hatTransform);
+      
+      // Update controls list
+      controls.params.objects.list.push({ id: 'hat', name: 'Hat Model', type: 'OBJ' });
+      controls.updateObjectList();
+      
+      console.log('Hat model loaded and added to scene');
+    }
+  }).catch(err => console.error('Failed to load hat texture:', err));
+}).catch(err => console.error('Failed to load hat model:', err));
+
+// Also load texture for existing meshes
 TextureLoader.load(gl, '/models/texture.png').then(texture => {
   mesh.setTexture(texture);
   satelliteMesh.setTexture(texture); // Use same texture for satellite

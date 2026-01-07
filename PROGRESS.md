@@ -364,35 +364,78 @@
 
 PDF'de açıkça belirtilen: **"A basic GUI to add objects to the scene, change their positions/rotations/scales, and adjust light properties"**
 
-**Mevcut Durum:**
+**Mevcut Durum (7 Ocak 2026 - GÜNCELLEME):**
 - ✅ Scene graph altyapısı var (`Scene.ts`)
 - ✅ Transform sistemi çalışıyor (parent-child hierarchy)
-- ❌ **Obje ekleme/çıkarma UI'ı YOK**
-- ❌ **Position/Rotation/Scale sliderları YOK**
-- ❌ **Game camera kontrolleri YOK** (fixed 10,10,10 pozisyonunda)
+- ✅ **Obje ekleme/çıkarma UI'ı TAMAMLANDI** (Commit 16)
+- ✅ **Position/Rotation/Scale sliderları TAMAMLANDI** (Commit 16)
+- ❌ **Game camera kontrolleri KISMEN** (fixed 10,10,10 pozisyonunda ama UI yok)
 
 ---
 
-### Commit 16: Scene Management UI ⭐ YÜKSEK ÖNCELİK
+### Commit 16: Scene Management UI ✅ **TAMAMLANDI** (7 Ocak 2026)
 **PDF Requirement**: "GUI to add objects... change their positions/rotations/scales"
 
-**Eklenecekler:**
-- [ ] Object list dropdown (tüm scene objelerini göster)
-- [ ] "Add Object" butonu + geometry type seçimi
-- [ ] "Remove Selected" butonu
-- [ ] Selected object için Transform controls:
+**Tamamlanan Özellikler:**
+- ✅ Object list dropdown (tüm scene objelerini göster)
+- ✅ Geometry Type dropdown (Objects folder'da, Add Object butonundan önce)
+- ✅ "Add Object" butonu (seçilen geometry tipinde obje ekler)
+- ✅ "Remove Selected" butonu (seçili objeyi siler)
+- ✅ Selected object için Transform controls:
   - Position X/Y/Z sliders (-10 to 10)
-  - Rotation X/Y/Z sliders (0 to 360)
+  - Rotation X/Y/Z sliders (0 to 360)  
   - Scale X/Y/Z sliders (0.1 to 5)
 
 **Dosyalar:**
-- `SceneControls.ts`: Object management UI ekleme
-- `main.ts`: Scene manipulation callbacks
-- `Scene.ts`: Helper methods (updateObject, getObjectNames)
+- `SceneControls.ts`: Object management UI + geometryTypeToAdd parameter
+- `main.ts`: Scene manipulation callbacks + previousSelectedId tracking
+- `Scene.ts`: Helper methods (updateObject, hasObject, getObjectNames)
 
-**Tahmini Süre:** 2-3 saat
+**Browser Testing:** ✅ BAŞARILI
+- Add Object creates new objects (Cube 2, Cube 3, etc.)
+- Remove Selected deletes objects (all objects can be deleted)
+- Dropdown updates dynamically
+- Transform sliders work correctly
+- No transform reset bugs
 
 ---
+
+### Recent Improvements (7 Ocak 2026) ⭐
+
+#### Orbit Controller Enhancement ✅
+- ✅ Mouse wheel zoom support (distance clamping 1.0-50.0)
+- ✅ Natural zoom feel (scaled by current distance)
+- ✅ Proper event cleanup in destroy()
+
+#### UI Fixes ✅
+- ✅ Geometry Type dropdown moved to Objects folder (better UX)
+- ✅ Fixed transform reset bug with previousSelectedId tracking
+- ✅ Transform values only applied when sliders actually change
+- ✅ All objects deletable (safety check removed per user request)
+
+#### FPS Controller Improvements ✅  
+- ✅ Default camera mode set to FPS (auto-enables on startup)
+- ✅ ESC key properly stops movement (clears WASD flags + update guard)
+- ✅ Movement only processes when pointer locked
+
+#### Geometry Rendering Fixes ✅
+- ✅ **Cylinder winding order fixed** - Side walls now render correctly
+- ✅ **Prism winding order fixed** - Side walls now render correctly
+- ✅ Interior faces no longer visible (proper face culling)
+
+#### Hat Model Integration ✅ **DEFAULT SCENE OBJECT**
+- ✅ model.obj loaded with OBJLoader as permanent scene object
+- ✅ texture.png applied with corrected UV mapping
+- ✅ **UV V-coordinate flipped** (1.0 - v) for correct OpenGL orientation
+- ✅ Scale set to 0.1 for proper visibility
+- ✅ Positioned at (3, 0, 0) 
+- ✅ Added to Objects dropdown as "Hat Model"
+- ✅ Fully integrated into scene (deletable, selectable, transformable)
+
+**Status:** Hat model is now a default scene object alongside Main Cube and Satellite.
+
+---
+
 
 ### Commit 17: Game Camera UI Controls ⭐ YÜKSEK ÖNCELİK
 **Sorun**: Game View kamerası tamamen statik, hiçbir UI kontrolü yok
