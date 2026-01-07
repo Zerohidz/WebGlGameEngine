@@ -239,7 +239,6 @@ function switchCameraMode(cameraMode: string) {
       }
       fpsController.setMovementSpeed(controls.params.controls.movementSpeed);
       fpsController.setMouseSensitivity(controls.params.controls.mouseSensitivity);
-      controls.params.animation.autoRotate = false;
 
       // Disable orbit if active
       if (orbitController) {
@@ -256,7 +255,6 @@ function switchCameraMode(cameraMode: string) {
       }
       orbitController.setSensitivity(controls.params.controls.orbitSensitivity);
       orbitController.setDistance(controls.params.camera.distance);
-      controls.params.animation.autoRotate = false;
 
       // Disable FPS if active
       if (fpsController) {
@@ -621,8 +619,10 @@ function render(): void {
   // Update FPS controller if active AND in Engine or Split View
   if ((currentViewMode === 'engine' || currentViewMode === 'split') && fpsController) {
     fpsController.update(deltaTime);
-  } else if (controls.params.animation.autoRotate) {
-    // Only auto-rotate if FPS mode is off
+  }
+  
+  // Auto-rotate if enabled (independent of camera mode)
+  if (controls.params.animation.autoRotate) {
     time += 0.01 * controls.params.animation.speed;
     meshTransform.setRotation(
       time * controls.params.animation.rotationSpeedX,
@@ -630,7 +630,7 @@ function render(): void {
       0
     );
     
-  // Satellite local rotation (spinning on its own axis)
+    // Satellite local rotation (spinning on its own axis)
     satelliteTransform.setRotation(0, time * 100, 0);
   }
 
