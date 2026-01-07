@@ -145,10 +145,10 @@ export namespace Cylinder {
       const topRight = sideStartIndex + (i + 1) * 2;
       const bottomRight = topRight + 1;
 
-      // First triangle (TL, BL, TR)
-      indices.push(topLeft, bottomLeft, topRight);
-      // Second triangle (TR, BL, BR)
-      indices.push(topRight, bottomLeft, bottomRight);
+      // First triangle (TL, TR, BL) - reversed winding
+      indices.push(topLeft, topRight, bottomLeft);
+      // Second triangle (TR, BR, BL) - reversed winding
+      indices.push(topRight, bottomRight, bottomLeft);
     }
 
     return new Geometry(

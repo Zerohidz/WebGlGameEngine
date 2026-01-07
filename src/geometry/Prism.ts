@@ -129,10 +129,10 @@ export namespace Prism {
       
       // Indices for this face
       const base = sideStartIndex + i * 4;
-      // TL, BL, BR
-      indices.push(base, base + 1, base + 2);
-      // TL, BR, TR
-      indices.push(base, base + 2, base + 3);
+      // TL, TR, BL - reversed winding
+      indices.push(base, base + 3, base + 1);
+      // TR, BR, BL - reversed winding
+      indices.push(base + 3, base + 2, base + 1);
     }
 
     return new Geometry(
