@@ -166,6 +166,11 @@ const controls = new SceneControls({
     projectionMode: 'Perspective',
     orthoSize: 5,
   },
+  gameCamera: {
+    position: { x: 10, y: 10, z: 10 },
+    target: { x: 0, y: 0, z: 0 },
+    fov: 60,
+  },
   animation: {
     speed: 1.0,
     autoRotate: true,
@@ -339,6 +344,20 @@ controls.onChange(() => {
     : ProjectionMode.ORTHOGRAPHIC;
   camera.setProjectionMode(newMode);
   camera.setOrthoSize(controls.params.camera.orthoSize);
+
+  // Update game camera
+  gameCamera.setPosition(
+    controls.params.gameCamera.position.x,
+    controls.params.gameCamera.position.y,
+    controls.params.gameCamera.position.z
+  );
+  gameCamera.setTarget(
+    controls.params.gameCamera.target.x,
+    controls.params.gameCamera.target.y,
+    controls.params.gameCamera.target.z
+  );
+  gameCamera.setFOV(controls.params.gameCamera.fov);
+
 
   // Update geometry if type changed
   if (controls.params.geometry.type === 'Cube') {

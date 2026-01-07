@@ -26,6 +26,11 @@ export interface ControlParams {
     projectionMode: string; // 'Perspective' | 'Orthographic'
     orthoSize: number;
   };
+  gameCamera: {
+    position: { x: number; y: number; z: number };
+    target: { x: number; y: number; z: number };
+    fov: number;
+  };
   animation: {
     speed: number;
     autoRotate: boolean;
@@ -71,6 +76,7 @@ export class SceneControls {
 
     this.setupLightingControls();
     this.setupCameraControls();
+    this.setupGameCameraControls();
     this.setupAnimationControls();
     this.setupGeometryControls();
     this.setupControlsControls();
@@ -238,6 +244,48 @@ export class SceneControls {
       });
 
     cameraFolder.open();
+  }
+
+  /**
+   * Setup game camera controls folder
+   */
+  private setupGameCameraControls(): void {
+    const gameCameraFolder = this.gui.addFolder('Game Camera');
+
+    const positionFolder = gameCameraFolder.addFolder('Position');
+    positionFolder
+      .add(this.params.gameCamera.position, 'x', -20, 20, 0.5)
+      .name('X')
+      .onChange(() => this.triggerChange());
+    positionFolder
+      .add(this.params.gameCamera.position, 'y', -20, 20, 0.5)
+      .name('Y')
+      .onChange(() => this.triggerChange());
+    positionFolder
+      .add(this.params.gameCamera.position, 'z', -20, 20, 0.5)
+      .name('Z')
+      .onChange(() => this.triggerChange());
+
+    const targetFolder = gameCameraFolder.addFolder('Target');
+    targetFolder
+      .add(this.params.gameCamera.target, 'x', -10, 10, 0.5)
+      .name('X')
+      .onChange(() => this.triggerChange());
+    targetFolder
+      .add(this.params.gameCamera.target, 'y', -10, 10, 0.5)
+      .name('Y')
+      .onChange(() => this.triggerChange());
+    targetFolder
+      .add(this.params.gameCamera.target, 'z', -10, 10, 0.5)
+      .name('Z')
+      .onChange(() => this.triggerChange());
+
+    gameCameraFolder
+      .add(this.params.gameCamera, 'fov', 30, 120, 1)
+      .name('FOV (degrees)')
+      .onChange(() => this.triggerChange());
+
+    gameCameraFolder.close();
   }
 
   /**
