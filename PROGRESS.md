@@ -358,12 +358,122 @@
 
 ---
 
+## 📋 Planlanan Yeni Commitler (PDF Requirement Analysis - 6 Ocak 2026)
+
+### ⚠️ KRİTİK EKSİKLİKLER TESPİT EDİLDİ
+
+PDF'de açıkça belirtilen: **"A basic GUI to add objects to the scene, change their positions/rotations/scales, and adjust light properties"**
+
+**Mevcut Durum:**
+- ✅ Scene graph altyapısı var (`Scene.ts`)
+- ✅ Transform sistemi çalışıyor (parent-child hierarchy)
+- ❌ **Obje ekleme/çıkarma UI'ı YOK**
+- ❌ **Position/Rotation/Scale sliderları YOK**
+- ❌ **Game camera kontrolleri YOK** (fixed 10,10,10 pozisyonunda)
+
+---
+
+### Commit 16: Scene Management UI ⭐ YÜKSEK ÖNCELİK
+**PDF Requirement**: "GUI to add objects... change their positions/rotations/scales"
+
+**Eklenecekler:**
+- [ ] Object list dropdown (tüm scene objelerini göster)
+- [ ] "Add Object" butonu + geometry type seçimi
+- [ ] "Remove Selected" butonu
+- [ ] Selected object için Transform controls:
+  - Position X/Y/Z sliders (-10 to 10)
+  - Rotation X/Y/Z sliders (0 to 360)
+  - Scale X/Y/Z sliders (0.1 to 5)
+
+**Dosyalar:**
+- `SceneControls.ts`: Object management UI ekleme
+- `main.ts`: Scene manipulation callbacks
+- `Scene.ts`: Helper methods (updateObject, getObjectNames)
+
+**Tahmini Süre:** 2-3 saat
+
+---
+
+### Commit 17: Game Camera UI Controls ⭐ YÜKSEK ÖNCELİK
+**Sorun**: Game View kamerası tamamen statik, hiçbir UI kontrolü yok
+
+**Eklenecekler:**
+- [ ] Game Camera Position sliders (X/Y/Z)
+- [ ] Game Camera Target sliders (X/Y/Z)
+- [ ] Game Camera FOV slider
+- [ ] UI visibility: Sadece Game/Split view'de görünsün
+
+**Dosyalar:**
+- `SceneControls.ts`: Game camera controls folder
+- `main.ts`: Game camera slider callbacks
+
+**Tahmini Süre:** 1 saat
+
+---
+
+### Commit 18: Light Management UI 🎨 ORTA ÖNCELİK
+**PDF Requirement**: "adjust light properties" (kısmen var, geliştirilmeli)
+
+**Eklenecekler:**
+- [ ] Light list (Directional, Point Light 1, Point Light 2...)
+- [ ] "Add Light" butonu (Point/Directional seçimi)
+- [ ] "Remove Light" butonu
+- [ ] Per-light on/off toggle
+- [ ] Multi-light shader support (şu anda hardcoded 1 directional + 1 point)
+
+**Dosyalar:**
+- `SceneControls.ts`: Dynamic light controls
+- `phong.ts`: Shader uniform arrays for multiple lights
+- `main.ts`: Multi-light rendering
+
+**Tahmini Süre:** 2-3 saat (shader değişikliği kompleks)
+
+---
+
+### Commit 19: Visual Gizmos (Camera & Lights) 🎨 DÜŞÜK ÖNCELİK
+**Nice to have**: Engine View'de debugging için
+
+**Eklenecekler:**
+- [ ] Camera frustum wireframe (game camera için)
+- [ ] Point light sphere gizmo
+- [ ] Gizmo on/off toggle
+
+**Tahmini Süre:** 2 saat (OPSIYONEL)
+
+---
+
+### Commit 20: OBJ Loading UI 🎨 DÜŞÜK ÖNCELİK
+**Improvement**: OBJ loader var ama UI'dan kullanılamıyor
+
+**Eklenecekler:**
+- [ ] "Load OBJ" butonu
+- [ ] File path input
+- [ ] Progress indicator
+
+**Tahmini Süre:** 1 saat (OPSIYONEL)
+
+---
+
+## 🎯 Önceliklendirme
+
+1. **Commit 16** - Scene Management (KRİTİK - PDF requirement)
+2. **Commit 17** - Game Camera Controls (KRİTİK - Game view kullanılamaz durumda)
+3. **Commit 18** - Light Management (ORTA - PDF requirement enhancement)
+4. **Commit 19-20** - Optional polish features
+
+**Toplam Minimum Süre:** 4-5 saat (Commit 16-17)
+**Teslim Tarihi:** 7 Ocak 23:59 (Yaklaşık 1.5 gün var)
+
+---
+
 ## 🎯 Next Steps
 
 1. ✅ **Commit 14:** Dual Viewports - COMPLETE
-2. **Commit 15:** Final Polish & Documentation
-3. Project submission preparation
-4. Final testing across all features
+2. 🔴 **Commit 16:** Scene Management UI - PLANLANDI (KRİTİK)
+3. 🔴 **Commit 17:** Game Camera Controls - PLANLANDI (KRİTİK)
+4. 🟡 **Commit 18:** Light Management - PLANLANDI (Opsiyonel)
+5. **Commit 21-22:** Final Polish & Documentation
+6. Project submission preparation
 
 ---
 
