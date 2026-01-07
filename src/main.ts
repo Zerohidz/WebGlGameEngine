@@ -12,10 +12,12 @@ import { Prism } from './geometry/Prism';
 import { DirectionalLight } from './lighting/DirectionalLight';
 import { PointLight } from './lighting/PointLight';
 import { phongVertexShader, phongFragmentShader } from './shaders/phong';
-import { SceneControls } from './ui/SceneControls';
+import { SceneControls, ControlParams } from './ui/SceneControls';
 import { FirstPersonController } from './controllers/FirstPersonController';
 import { OrbitController } from './controllers/OrbitController';
 import { Scene } from './engine/Scene';
+import { TextureLoader } from './loaders/TextureLoader';
+import { OBJLoader } from './loaders/OBJLoader';
 
 console.log('WebGL2 Game Engine - Starting...');
 
@@ -28,7 +30,6 @@ if (!canvas || !(canvas instanceof HTMLCanvasElement)) {
 
 // Resize canvas to fill window
 const typedCanvas = canvas; // Type narrowed to HTMLCanvasElement
-
 
 // Initial resize (without camera updates)
 typedCanvas.width = window.innerWidth;
@@ -73,6 +74,7 @@ const cylinderGeometry = Cylinder.create(gl, 0.5, 2.0, 32);
 const prismTriangleGeometry = Prism.create(gl, 0.7, 2.0, 3);
 const prismHexagonGeometry = Prism.create(gl, 0.7, 2.0, 6);
 let currentGeometry = cubeGeometry;
+
 // Create scene
 const scene = new Scene();
 
@@ -102,10 +104,6 @@ const tabEngine = document.getElementById('tab-engine');
 const tabGame = document.getElementById('tab-game');
 const tabSplit = document.getElementById('tab-split');
 
-// Load and apply texture
-import { TextureLoader } from './loaders/TextureLoader';
-import { OBJLoader } from './loaders/OBJLoader';
-
 // Object counter for unique naming
 let objectCounter = 2; // Start at 2 (main=0, satellite=1)
 
@@ -118,9 +116,8 @@ gameCamera.setPosition(10, 10, 10);
 gameCamera.setTarget(0, 0, 0);
 console.log('Game Camera initialized');
 
-
-// Create UI controls
-const controls = new SceneControls({
+// Initialize Control Parameters
+const controlParams: ControlParams = {
   lighting: {
     ambientStrength: 0.2,
     direction: { x: 0, y: -1, z: -1 },
@@ -177,8 +174,47 @@ const controls = new SceneControls({
     },
     addObjectRequested: false,
     removeObjectRequested: false,
+    clearSceneRequested: false,
   },
-});
+};
+
+// Create Scene Controls
+const controls = new SceneControls(
+  controlParams,
+  scene,
+  camera,
+  light,
+  renderer,
+  (name, content) => {
+    // onLoadOBJ Callback
+    try {
+      console.log(`Parsing OBJ: ${name}`);
+      const geometry = OBJLoader.parse(gl, content);
+      
+      const transform = new Transform();
+      transform.setPosition(0, 5, 0); // Default spawn position
+      
+      const objMesh = new Mesh(geometry, transform);
+      
+      // Load default texture
+      void TextureLoader.load(gl, '/models/texture.png').then((texture) => {
+        objMesh.setTexture(texture);
+      }).catch(console.error);
+      
+      const id = `obj_${Date.now()}`;
+      scene.addObject(id, objMesh, transform);
+      
+      // Add to list
+      controls.params.objects.list.push({ id, name, type: 'OBJ' });
+      controls.updateObjectList();
+      
+      console.log(`Successfully loaded ${name}`);
+    } catch (error) {
+      console.error('Failed to load OBJ:', error);
+      alert('Failed to parse OBJ file.');
+    }
+  }
+);
 
 // Update object list dropdown after initialization
 controls.updateObjectList();
@@ -212,19 +248,15 @@ void TextureLoader.load(gl, '/models/texture.png').then((texture) => {
 // FPS Controller (initially null)
 let fpsController: FirstPersonController | null = null;
 
-// Orbit Controller for Game View (always active for gameCamera)
+// Orbit Controller for Game View
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let orbitController: OrbitController | null = null;
 
-// Canvas click handler for pointer lock (only active when FPS mode is enabled AND in correct view)
+// Canvas click handler for pointer lock
 const canvasClickHandler = (event: MouseEvent): void => {
-  // Only lock pointer if:
-  // 1. In Engine View (full) OR
-  // 2. In Split View AND clicked on the LEFT half (Engine side)
   if (currentViewMode === 'engine') {
     void typedCanvas.requestPointerLock();
   } else if (currentViewMode === 'split') {
-    // Check if click is on the left half
     const canvasRect = typedCanvas.getBoundingClientRect();
     const clickX = event.clientX - canvasRect.left;
     const halfWidth = canvasRect.width / 2;
@@ -232,14 +264,12 @@ const canvasClickHandler = (event: MouseEvent): void => {
       void typedCanvas.requestPointerLock();
     }
   }
-  // Do nothing in Game View or if clicked on right side of Split View
 };
 
 
 function switchCameraMode(cameraMode: string) {
   switch (cameraMode) {
     case 'FPS':
-      // Enable FPS mode
       if (!fpsController) {
         fpsController = new FirstPersonController(camera, typedCanvas);
         typedCanvas.addEventListener('click', canvasClickHandler);
@@ -247,8 +277,6 @@ function switchCameraMode(cameraMode: string) {
       }
       fpsController.setMovementSpeed(controls.params.controls.movementSpeed);
       fpsController.setMouseSensitivity(controls.params.controls.mouseSensitivity);
-
-      // Disable orbit if active
       if (orbitController) {
         orbitController.destroy();
         orbitController = null;
@@ -256,15 +284,12 @@ function switchCameraMode(cameraMode: string) {
       break;
 
     case 'Orbit':
-      // Enable Orbit mode
       if (!orbitController) {
         orbitController = new OrbitController(camera, typedCanvas);
         console.log('Orbit Controller enabled');
       }
       orbitController.setSensitivity(controls.params.controls.orbitSensitivity);
       orbitController.setDistance(controls.params.camera.distance);
-
-      // Disable FPS if active
       if (fpsController) {
         fpsController = null;
         typedCanvas.removeEventListener('click', canvasClickHandler);
@@ -276,7 +301,6 @@ function switchCameraMode(cameraMode: string) {
 
     case 'None':
     default:
-      // Disable both controllers
       if (fpsController) {
         fpsController = null;
         typedCanvas.removeEventListener('click', canvasClickHandler);
@@ -285,18 +309,16 @@ function switchCameraMode(cameraMode: string) {
         }
         camera.setPosition(0, 0, controls.params.camera.distance);
         camera.setTarget(0, 0, 0);
-        console.log('FPS Controller disabled');
       }
       if (orbitController) {
         orbitController.destroy();
         orbitController = null;
-        console.log('Orbit Controller disabled');
       }
       break;
   }
 }
 
-// Initialize camera mode (enable FPS by default)
+// Initialize camera mode
 switchCameraMode(controls.params.controls.cameraMode);
 
 // Update scene when controls change
@@ -308,7 +330,7 @@ controls.onChange(() => {
     controls.params.lighting.direction.z
   );
 
-  // Update light color from hex
+  // Update light color
   const hex = controls.params.lighting.color.replace('#', '');
   const r = parseInt(hex.substring(0, 2), 16) / 255;
   const g = parseInt(hex.substring(2, 4), 16) / 255;
@@ -335,13 +357,10 @@ controls.onChange(() => {
   // Update camera
   camera.setFOV(controls.params.camera.fov);
   
-  // Only reset camera position if NOT using FPS or Orbit controller
-  // Those controllers manage camera position themselves
   if (controls.params.controls.cameraMode === 'None') {
     camera.setPosition(0, 0, controls.params.camera.distance);
   }
   
-  // Update projection mode
   const newMode = controls.params.camera.projectionMode === 'Perspective' 
     ? ProjectionMode.PERSPECTIVE 
     : ProjectionMode.ORTHOGRAPHIC;
@@ -397,24 +416,18 @@ controls.onChange(() => {
   // Update mesh geometry if changed
   if (mesh.geometry !== currentGeometry) {
       const oldTexture = mesh.texture;
-      // Re-create mesh with new geometry but KEEP old transform
       mesh = new Mesh(currentGeometry, meshTransform);
       mesh.setTexture(oldTexture);
-      // Update scene object references
       scene.removeObject('main');
       scene.addObject('main', mesh, meshTransform);
-      
-      // Re-attach satellite if needed (transform ref is same so parent link implies)
-      // satelliteTransform.setParent(meshTransform); // Already set
   }
 
   switchCameraMode(controls.params.controls.cameraMode);
 
-  // Check action flags set by button clicks
+  // Check action flags
   if (controls.params.objects.addObjectRequested) {
-    controls.params.objects.addObjectRequested = false; // Clear flag
+    controls.params.objects.addObjectRequested = false;
   
-    // Use geometryTypeToAdd from dropdown instead of global geometry.type
     const geometryType = controls.params.objects.geometryTypeToAdd;
     let newGeometry = cubeGeometry;
     let geometryName = 'Cube';
@@ -441,17 +454,14 @@ controls.onChange(() => {
         geometryName = 'Cube';
     }
     
-    // Create new object
     const objectId = `object_${objectCounter}`;
     const objectName = `${geometryName} ${objectCounter}`;
     const newTransform = new Transform();
-    newTransform.setPosition(objectCounter * 2, 0, 0); // Offset each new object
+    newTransform.setPosition(objectCounter * 2, 0, 0);
     const newMesh = new Mesh(newGeometry, newTransform);
     
-    // Add to scene
     scene.addObject(objectId, newMesh, newTransform);
     
-    // Add to controls list
     controls.params.objects.list.push({ id: objectId, name: objectName, type: geometryName });
     controls.updateObjectList();
     
@@ -459,38 +469,48 @@ controls.onChange(() => {
     console.log(`Added object: ${objectName}`);
   }
   
-  // Check remove action flag
   if (controls.params.objects.removeObjectRequested) {
-    controls.params.objects.removeObjectRequested = false; // Clear flag
+    controls.params.objects.removeObjectRequested = false;
   
     if (controls.params.objects.selectedId) {
       const selectedId = controls.params.objects.selectedId;
-      
-      // Remove from scene
       scene.removeObject(selectedId);
       
-      // Remove from controls list
       const index = controls.params.objects.list.findIndex(obj => obj.id === selectedId);
       if (index !== -1) {
         controls.params.objects.list.splice(index, 1);
       }
       
-      // Clear selection
       controls.params.objects.selectedId = null;
       controls.updateObjectList();
-      
       console.log(`Removed object: ${selectedId}`);
     }
+  }
+
+  if (controls.params.objects.clearSceneRequested) {
+    controls.params.objects.clearSceneRequested = false;
+    // Implementation for clear scene could be loop through logic or scene.clear() if implemented
+    // For now, let's remove everything except main and satellite if desired, or all?
+    // Let's clear ALL for now as per button name
+    // BUT we need to handle the list.
+    const allObjects = [...controls.params.objects.list];
+    for (const obj of allObjects) {
+        if (obj.id === 'main' || obj.id === 'satellite') continue; // Keep default ones? Or clear all?
+        // Let's clear all custom objects
+        scene.removeObject(obj.id);
+    }
+    // Filter out removed objects from list
+    controls.params.objects.list = controls.params.objects.list.filter(obj => obj.id === 'main' || obj.id === 'satellite');
+    controls.updateObjectList();
+    console.log("Scene cleared (kept main/satellite)");
   }
   
   // Handle object selection change
   const currentSelectedId = controls.params.objects.selectedId;
   
-  // Check if selection actually changed
   if (currentSelectedId !== previousSelectedId) {
     previousSelectedId = currentSelectedId;
     
-    // Update transform UI to match newly selected object
     if (currentSelectedId) {
       const selectedObj = scene.getObject(currentSelectedId);
       if (selectedObj) {
@@ -498,7 +518,6 @@ controls.onChange(() => {
         const rot = selectedObj.transform.rotation;
         const scl = selectedObj.transform.scale;
         
-        // Sync UI with object's current values
         controls.params.objects.transform.position.x = pos[0];
         controls.params.objects.transform.position.y = pos[1];
         controls.params.objects.transform.position.z = pos[2];
@@ -513,7 +532,6 @@ controls.onChange(() => {
       }
     }
   } else if (currentSelectedId) {
-    // Selection didn't change - check if sliders were modified by user
     const selectedObj = scene.getObject(currentSelectedId);
     if (selectedObj) {
       const pos = selectedObj.transform.position;
@@ -524,7 +542,6 @@ controls.onChange(() => {
       const uiRot = controls.params.objects.transform.rotation;
       const uiScl = controls.params.objects.transform.scale;
       
-      // Check if UI sliders differ from object's current values (user moved sliders)
       const posChanged = Math.abs(uiPos.x - pos[0]) > 0.001 ||
                          Math.abs(uiPos.y - pos[1]) > 0.001 ||
                          Math.abs(uiPos.z - pos[2]) > 0.001;
@@ -537,18 +554,9 @@ controls.onChange(() => {
                          Math.abs(uiScl.y - scl[1]) > 0.001 ||
                          Math.abs(uiScl.z - scl[2]) > 0.001;
       
-      // Only apply if user actually changed sliders
-      if (posChanged) {
-        selectedObj.transform.setPosition(uiPos.x, uiPos.y, uiPos.z);
-      }
-      
-      if (rotChanged) {
-        selectedObj.transform.setRotation(uiRot.x, uiRot.y, uiRot.z);
-      }
-      
-      if (sclChanged) {
-        selectedObj.transform.setScale(uiScl.x, uiScl.y, uiScl.z);
-      }
+      if (posChanged) selectedObj.transform.setPosition(uiPos.x, uiPos.y, uiPos.z);
+      if (rotChanged) selectedObj.transform.setRotation(uiRot.x, uiRot.y, uiRot.z);
+      if (sclChanged) selectedObj.transform.setScale(uiScl.x, uiScl.y, uiScl.z);
     }
   }
 });
@@ -561,12 +569,9 @@ function resizeCanvas(): void {
   typedCanvas.width = window.innerWidth;
   typedCanvas.height = window.innerHeight;
   
-  // Only update cameras if they exist (after initialization)
   if (camera && gameCamera && renderer) {
     renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height);
     
-    // Only update aspect ratios if NOT in split view
-    // Split view sets its own aspect ratios per viewport in render loop
     if (currentViewMode !== 'split') {
       const fullAspect = typedCanvas.width / typedCanvas.height;
       camera.setAspect(fullAspect);
@@ -575,47 +580,39 @@ function resizeCanvas(): void {
   }
 }
 
-// Now we can safely add resize listener that uses cameras
 window.addEventListener('resize', () => {
   resizeCanvas();
 });
 
 
-// Tab Switching Logic
+// Tab Switching
 function setViewMode(mode: ViewMode): void {
   currentViewMode = mode;
   
-  // Update UI classes
   tabEngine?.classList.toggle('active', mode === 'engine');
   tabGame?.classList.toggle('active', mode === 'game');
   tabSplit?.classList.toggle('active', mode === 'split');
 
-  // Handle camera controller state when switching away from Engine view
   if (mode !== 'engine') {
-    // Exit pointer lock and reset camera mode
     document.exitPointerLock();
     if (controls.params.controls.cameraMode !== 'None') {
       controls.params.controls.cameraMode = 'None';
     }
   }
 
-  // Update aspect ratios immediately when switching modes
   if (mode === 'split') {
-    // Set split view aspect ratios immediately
     const halfWidth = typedCanvas.width / 2;
     const height = typedCanvas.height;
     const splitAspect = halfWidth / height;
     camera.setAspect(splitAspect);
     gameCamera.setAspect(splitAspect);
   } else {
-    // Set full screen aspect
     const fullAspect = typedCanvas.width / typedCanvas.height;
     camera.setAspect(fullAspect);
     gameCamera.setAspect(fullAspect);
   }
 
-  // Update camera aspects
-  resizeCanvas(); // re-trigger aspect calc
+  resizeCanvas();
 }
 
 tabEngine?.addEventListener('click', () => setViewMode('engine'));
@@ -629,15 +626,13 @@ let lastFrameTime = performance.now();
 // Render loop
 function render(): void {
   const currentTime = performance.now();
-  const deltaTime = (currentTime - lastFrameTime) / 1000; // Convert to seconds
+  const deltaTime = (currentTime - lastFrameTime) / 1000;
   lastFrameTime = currentTime;
   
-  // Update FPS controller if active AND in Engine or Split View
   if ((currentViewMode === 'engine' || currentViewMode === 'split') && fpsController) {
     fpsController.update(deltaTime);
   }
   
-  // Auto-rotate if enabled (independent of camera mode)
   if (controls.params.animation.autoRotate) {
     time += 0.01 * controls.params.animation.speed;
     meshTransform.setRotation(
@@ -645,18 +640,12 @@ function render(): void {
       time * controls.params.animation.rotationSpeedY,
       0
     );
-    
-    // Satellite local rotation (spinning on its own axis)
     satelliteTransform.setRotation(0, time * 100, 0);
   }
 
-  // Common Uniforms function
   const setUniforms = (cam: Camera): void => {
-    // NOTE: Viewport should already be set by the caller!
-    // Don't override it here or split view will break
     shader.use();
 
-    // Lighting
     const lightData = light.getUniformData();
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     shader.setVec3Array('u_lightDirection', lightData.direction as Float32Array);
@@ -679,64 +668,52 @@ function render(): void {
     shader.setFloat('u_pointLightQuadratic', pointLightData.quadratic);
   };
 
-  // RENDER LOGIC
-  renderer.setScissorTest(false); // Default disable
+  renderer.setScissorTest(false);
 
   if (currentViewMode === 'engine') {
-    // --- ENGINE VIEW (Full) ---
     renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height);
-    renderer.setClearColor(0, 0, 0, 1); // Black background
+    renderer.setClearColor(0, 0, 0, 1);
     renderer.clear();
     setUniforms(camera);
     scene.render(gl, shader, camera);
 
   } else if (currentViewMode === 'game') {
-    // --- GAME VIEW (Full) ---
     renderer.setViewport(0, 0, typedCanvas.width, typedCanvas.height);
-    renderer.setClearColor(0.1, 0.1, 0.2, 1); // Slight blue tint for game view
+    renderer.setClearColor(0.1, 0.1, 0.2, 1);
     renderer.clear();
     setUniforms(gameCamera);
     scene.render(gl, shader, gameCamera);
 
   } else if (currentViewMode === 'split') {
-    // --- SPLIT VIEW ---
     const halfWidth = typedCanvas.width / 2;
     const height = typedCanvas.height;
 
-    // enable scissor test
     renderer.setScissorTest(true);
 
-    // 1. LEFT SIDE (Engine View)
     const splitAspect = halfWidth / height;
     renderer.setViewport(0, 0, halfWidth, height);
     renderer.setScissor(0, 0, halfWidth, height);
     renderer.setClearColor(0, 0, 0, 1);
     renderer.clear();
     
-    // Set aspect for this specific viewport
     camera.setAspect(splitAspect);
     setUniforms(camera);
     scene.render(gl, shader, camera);
 
-    // 2. RIGHT SIDE (Game View)
     renderer.setViewport(halfWidth, 0, halfWidth, height);
     renderer.setScissor(halfWidth, 0, halfWidth, height);
     renderer.setClearColor(0.1, 0.1, 0.2, 1);
     renderer.clear();
 
-    // Set aspect for this specific viewport
     gameCamera.setAspect(splitAspect);
     setUniforms(gameCamera); 
     scene.render(gl, shader, gameCamera);
 
-    // Restore scissors
     renderer.setScissorTest(false);
   }
 
-  // Request next frame
   requestAnimationFrame(render);
 }
 
-// Start rendering
 console.log('Starting render loop...');
 render();

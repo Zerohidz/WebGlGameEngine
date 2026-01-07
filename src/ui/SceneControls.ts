@@ -1,5 +1,10 @@
 import GUI from 'lil-gui';
 
+import { Scene } from '../engine/Scene';
+import { Camera } from '../engine/Camera';
+import { Light } from '../lighting/Light';
+import { WebGLRenderer } from '../engine/WebGLRenderer';
+
 /**
  * Control parameters interface
  */
@@ -58,6 +63,7 @@ export interface ControlParams {
     // Action flags (set by button clicks, cleared by main.ts)
     addObjectRequested: boolean;
     removeObjectRequested: boolean;
+    clearSceneRequested: boolean;
   };
 }
 
@@ -69,10 +75,14 @@ export class SceneControls {
   gui: GUI;
   params: ControlParams;
   private changeCallback?: () => void;
+  private onLoadOBJ?: (name: string, content: string) => void;
 
-  constructor(params: ControlParams) {
+  constructor(params: ControlParams, _scene: Scene, _camera: Camera, _light: Light, _renderer: WebGLRenderer, onLoadOBJ?: (name: string, content: string) => void) {
     this.params = params;
-    this.gui = new GUI({ title: 'Scene Controls' });
+    this.onLoadOBJ = onLoadOBJ;
+
+    
+    this.gui = new GUI({ title: 'Engine Controls' });
 
     this.setupLightingControls();
     this.setupCameraControls();
@@ -443,6 +453,53 @@ export class SceneControls {
         } 
       }, 'removeObject')
       .name('🗑️ Remove Selected');
+
+    // Add new scene management buttons
+    const sceneParams = {
+        addCube: () => { this.params.objects.geometryTypeToAdd = 'Cube'; this.params.objects.addObjectRequested = true; this.triggerChange(); },
+        addSphere: () => { this.params.objects.geometryTypeToAdd = 'Sphere'; this.params.objects.addObjectRequested = true; this.triggerChange(); },
+        addCylinder: () => { this.params.objects.geometryTypeToAdd = 'Cylinder'; this.params.objects.addObjectRequested = true; this.triggerChange(); },
+        addPrism: () => { this.params.objects.geometryTypeToAdd = 'Prism (Triangle)'; this.params.objects.addObjectRequested = true; this.triggerChange(); }, // Assuming 'Prism (Triangle)' for generic 'Prism'
+        loadOBJ: () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.obj';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+
+            input.onchange = (e: Event) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        if (event.target?.result && this.onLoadOBJ) {
+                            this.onLoadOBJ(file.name, event.target.result as string);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+                document.body.removeChild(input);
+            };
+
+            input.click();
+        },
+        clearScene: () => {
+            // Keep the first object if it's the specific loaded model, or just clear all
+            // For now, let's just clear
+            // logic to clear scene could be added to Scene class
+            console.log("Clear scene not implemented fully");
+            this.params.objects.clearSceneRequested = true; // Assuming a new param for clearing scene
+            this.triggerChange();
+        }
+    };
+
+    objectsFolder.add(sceneParams, 'addCube').name('➕ Add Cube');
+    objectsFolder.add(sceneParams, 'addSphere').name('➕ Add Sphere');
+    objectsFolder.add(sceneParams, 'addCylinder').name('➕ Add Cylinder');
+    objectsFolder.add(sceneParams, 'addPrism').name('➕ Add Prism');
+    objectsFolder.add(sceneParams, 'loadOBJ').name('📂 Load OBJ Model');
+    objectsFolder.add(sceneParams, 'clearScene').name('🧹 Clear Scene');
+
 
     // Transform controls folder (only visible when object selected)
     const transformFolder = objectsFolder.addFolder('Transform');
