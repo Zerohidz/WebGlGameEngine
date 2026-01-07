@@ -42,6 +42,7 @@ export class OrbitController {
     this.canvas.addEventListener('mousemove', this.onMouseMove);
     this.canvas.addEventListener('mouseup', this.onMouseUp);
     this.canvas.addEventListener('mouseleave', this.onMouseUp);
+    this.canvas.addEventListener('wheel', this.onMouseWheel, { passive: false });
   }
 
   private onMouseDown = (event: MouseEvent): void => {
@@ -73,6 +74,20 @@ export class OrbitController {
     this.isDragging = false;
   };
 
+  private onMouseWheel = (event: WheelEvent): void => {
+    event.preventDefault();
+
+    const zoomSpeed = 0.005;
+    this.distance += event.deltaY * zoomSpeed * this.distance; // Scale zoom by distance for natural feel
+
+    // Clamp distance
+    const minDistance = 1.0;
+    const maxDistance = 50.0;
+    this.distance = Math.max(minDistance, Math.min(maxDistance, this.distance));
+
+    this.updateCameraPosition();
+  };
+
   private updateCameraPosition(): void {
     // Spherical to Cartesian coordinates
     const x = this.target[0] + this.distance * Math.cos(this.elevation) * Math.sin(this.azimuth);
@@ -97,5 +112,6 @@ export class OrbitController {
     this.canvas.removeEventListener('mousemove', this.onMouseMove);
     this.canvas.removeEventListener('mouseup', this.onMouseUp);
     this.canvas.removeEventListener('mouseleave', this.onMouseUp);
+    this.canvas.removeEventListener('wheel', this.onMouseWheel);
   }
 }

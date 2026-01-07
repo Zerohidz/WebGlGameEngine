@@ -61,6 +61,30 @@ export class Scene {
   }
 
   /**
+   * Update an object in the scene (used for geometry changes)
+   */
+  updateObject(name: string, mesh: Mesh, transform: Transform): void {
+    const index = this.objects.findIndex(obj => obj.name === name);
+    if (index !== -1) {
+      this.objects[index] = { name, mesh, transform };
+    }
+  }
+
+  /**
+   * Check if an object exists in the scene
+   */
+  hasObject(name: string): boolean {
+    return this.objects.some(obj => obj.name === name);
+  }
+
+  /**
+   * Get all object names in the scene
+   */
+  getObjectNames(): string[] {
+    return this.objects.map(obj => obj.name);
+  }
+
+  /**
    * Render all objects in the scene
    */
   render(gl: WebGL2RenderingContext, shader: Shader, camera: Camera): void {

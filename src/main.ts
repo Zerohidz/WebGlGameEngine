@@ -110,6 +110,12 @@ TextureLoader.load(gl, '/models/texture.png').then(texture => {
   console.log('Texture applied to meshes');
 });
 
+// Object counter for unique naming
+let objectCounter = 2; // Start at 2 (main=0, satellite=1)
+
+// Track previous selected object to detect selection changes
+let previousSelectedId: string | null = null;
+
 // Create UI controls
 const controls = new SceneControls({
   lighting: {
@@ -149,7 +155,25 @@ const controls = new SceneControls({
     mouseSensitivity: 0.002,
     orbitSensitivity: 0.005,
   },
+  objects: {
+    list: [
+      { id: 'main', name: 'Main Cube', type: 'Cube' },
+      { id: 'satellite', name: 'Satellite', type: 'Sphere' },
+    ],
+    selectedId: null,
+    geometryTypeToAdd: 'Cube', // Default geometry type
+    transform: {
+      position: { x: 0, y: 0, z: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      scale: { x: 1, y: 1, z: 1 },
+    },
+    addObjectRequested: false,
+    removeObjectRequested: false,
+  },
 });
+
+// Update object list dropdown after initialization
+controls.updateObjectList();
 
 // FPS Controller (initially null)
 let fpsController: FirstPersonController | null = null;
@@ -176,6 +200,68 @@ const canvasClickHandler = (event: MouseEvent): void => {
   }
   // Do nothing in Game View or if clicked on right side of Split View
 };
+
+function switchCameraMode(cameraMode: string) {
+  switch (cameraMode) {
+    case 'FPS':
+      // Enable FPS mode
+      if (!fpsController) {
+        fpsController = new FirstPersonController(camera, typedCanvas);
+        typedCanvas.addEventListener('click', canvasClickHandler);
+        console.log('FPS Controller enabled');
+      }
+      fpsController.setMovementSpeed(controls.params.controls.movementSpeed);
+      fpsController.setMouseSensitivity(controls.params.controls.mouseSensitivity);
+      controls.params.animation.autoRotate = false;
+
+      // Disable orbit if active
+      if (orbitController) {
+        orbitController.destroy();
+        orbitController = null;
+      }
+      break;
+
+    case 'Orbit':
+      // Enable Orbit mode
+      if (!orbitController) {
+        orbitController = new OrbitController(camera, typedCanvas);
+        console.log('Orbit Controller enabled');
+      }
+      orbitController.setSensitivity(controls.params.controls.orbitSensitivity);
+      orbitController.setDistance(controls.params.camera.distance);
+      controls.params.animation.autoRotate = false;
+
+      // Disable FPS if active
+      if (fpsController) {
+        fpsController = null;
+        typedCanvas.removeEventListener('click', canvasClickHandler);
+        if (document.pointerLockElement === typedCanvas) {
+          document.exitPointerLock();
+        }
+      }
+      break;
+
+    case 'None':
+    default:
+      // Disable both controllers
+      if (fpsController) {
+        fpsController = null;
+        typedCanvas.removeEventListener('click', canvasClickHandler);
+        if (document.pointerLockElement === typedCanvas) {
+          document.exitPointerLock();
+        }
+        camera.setPosition(0, 0, controls.params.camera.distance);
+        camera.setTarget(0, 0, 0);
+        console.log('FPS Controller disabled');
+      }
+      if (orbitController) {
+        orbitController.destroy();
+        orbitController = null;
+        console.log('Orbit Controller disabled');
+      }
+      break;
+  }
+}
 
 // Update scene when controls change
 controls.onChange(() => {
@@ -272,69 +358,151 @@ controls.onChange(() => {
       // satelliteTransform.setParent(meshTransform); // Already set
   }
 
-  // Handle Camera Mode changes
-  const cameraMode = controls.params.controls.cameraMode;
+  switchCameraMode(controls.params.controls.cameraMode);
+
+  // Check action flags set by button clicks
+  if (controls.params.objects.addObjectRequested) {
+    controls.params.objects.addObjectRequested = false; // Clear flag
   
-  switch (cameraMode) {
-    case 'FPS':
-      // Enable FPS mode
-      if (!fpsController) {
-        fpsController = new FirstPersonController(camera, typedCanvas);
-        typedCanvas.addEventListener('click', canvasClickHandler);
-        console.log('FPS Controller enabled');
-      }
-      fpsController.setMovementSpeed(controls.params.controls.movementSpeed);
-      fpsController.setMouseSensitivity(controls.params.controls.mouseSensitivity);
-      controls.params.animation.autoRotate = false;
+    // Use geometryTypeToAdd from dropdown instead of global geometry.type
+    const geometryType = controls.params.objects.geometryTypeToAdd;
+    let newGeometry = cubeGeometry;
+    let geometryName = 'Cube';
+    
+    switch (geometryType) {
+      case 'Sphere':
+        newGeometry = sphereGeometry;
+        geometryName = 'Sphere';
+        break;
+      case 'Cylinder':
+        newGeometry = cylinderGeometry;
+        geometryName = 'Cylinder';
+        break;
+      case 'Prism (Triangle)':
+        newGeometry = prismTriangleGeometry;
+        geometryName = 'Triangle';
+        break;
+      case 'Prism (Hexagon)':
+        newGeometry = prismHexagonGeometry;
+        geometryName = 'Hexagon';
+        break;
+      default:
+        newGeometry = cubeGeometry;
+        geometryName = 'Cube';
+    }
+    
+    // Create new object
+    const objectId = `object_${objectCounter}`;
+    const objectName = `${geometryName} ${objectCounter}`;
+    const newTransform = new Transform();
+    newTransform.setPosition(objectCounter * 2, 0, 0); // Offset each new object
+    const newMesh = new Mesh(newGeometry, newTransform);
+    
+    // Add to scene
+    scene.addObject(objectId, newMesh, newTransform);
+    
+    // Add to controls list
+    controls.params.objects.list.push({ id: objectId, name: objectName, type: geometryName });
+    controls.updateObjectList();
+    
+    objectCounter++;
+    console.log(`Added object: ${objectName}`);
+  }
+  
+  // Check remove action flag
+  if (controls.params.objects.removeObjectRequested) {
+    controls.params.objects.removeObjectRequested = false; // Clear flag
+  
+    if (controls.params.objects.selectedId) {
+      const selectedId = controls.params.objects.selectedId;
       
-      // Disable orbit if active
-      if (orbitController) {
-        orbitController.destroy();
-        orbitController = null;
-      }
-      break;
+      // Remove from scene
+      scene.removeObject(selectedId);
       
-    case 'Orbit':
-      // Enable Orbit mode
-      if (!orbitController) {
-        orbitController = new OrbitController(camera, typedCanvas);
-        console.log('Orbit Controller enabled');
+      // Remove from controls list
+      const index = controls.params.objects.list.findIndex(obj => obj.id === selectedId);
+      if (index !== -1) {
+        controls.params.objects.list.splice(index, 1);
       }
-      orbitController.setSensitivity(controls.params.controls.orbitSensitivity);
-      orbitController.setDistance(controls.params.camera.distance);
-      controls.params.animation.autoRotate = false;
       
-      // Disable FPS if active
-      if (fpsController) {
-        fpsController = null;
-        typedCanvas.removeEventListener('click', canvasClickHandler);
-        if (document.pointerLockElement === typedCanvas) {
-          document.exitPointerLock();
-        }
-      }
-      break;
+      // Clear selection
+      controls.params.objects.selectedId = null;
+      controls.updateObjectList();
       
-    case 'None':
-    default:
-      // Disable both controllers
-      if (fpsController) {
-        fpsController = null;
-        typedCanvas.removeEventListener('click', canvasClickHandler);
-        if (document.pointerLockElement === typedCanvas) {
-          document.exitPointerLock();
-        }
-        camera.setPosition(0, 0, controls.params.camera.distance);
-        camera.setTarget(0, 0, 0);
-        console.log('FPS Controller disabled');
+      console.log(`Removed object: ${selectedId}`);
+    }
+  }
+  
+  // Handle object selection change
+  const currentSelectedId = controls.params.objects.selectedId;
+  
+  // Check if selection actually changed
+  if (currentSelectedId !== previousSelectedId) {
+    previousSelectedId = currentSelectedId;
+    
+    // Update transform UI to match newly selected object
+    if (currentSelectedId) {
+      const selectedObj = scene.getObject(currentSelectedId);
+      if (selectedObj) {
+        const pos = selectedObj.transform.position;
+        const rot = selectedObj.transform.rotation;
+        const scl = selectedObj.transform.scale;
+        
+        // Sync UI with object's current values
+        controls.params.objects.transform.position.x = pos[0];
+        controls.params.objects.transform.position.y = pos[1];
+        controls.params.objects.transform.position.z = pos[2];
+        
+        controls.params.objects.transform.rotation.x = rot[0];
+        controls.params.objects.transform.rotation.y = rot[1];
+        controls.params.objects.transform.rotation.z = rot[2];
+        
+        controls.params.objects.transform.scale.x = scl[0];
+        controls.params.objects.transform.scale.y = scl[1];
+        controls.params.objects.transform.scale.z = scl[2];
       }
-      if (orbitController) {
-        orbitController.destroy();
-        orbitController = null;
-        console.log('Orbit Controller disabled');
+    }
+  } else if (currentSelectedId) {
+    // Selection didn't change - check if sliders were modified by user
+    const selectedObj = scene.getObject(currentSelectedId);
+    if (selectedObj) {
+      const pos = selectedObj.transform.position;
+      const rot = selectedObj.transform.rotation;
+      const scl = selectedObj.transform.scale;
+      
+      const uiPos = controls.params.objects.transform.position;
+      const uiRot = controls.params.objects.transform.rotation;
+      const uiScl = controls.params.objects.transform.scale;
+      
+      // Check if UI sliders differ from object's current values (user moved sliders)
+      const posChanged = Math.abs(uiPos.x - pos[0]) > 0.001 ||
+                         Math.abs(uiPos.y - pos[1]) > 0.001 ||
+                         Math.abs(uiPos.z - pos[2]) > 0.001;
+      
+      const rotChanged = Math.abs(uiRot.x - rot[0]) > 0.001 ||
+                         Math.abs(uiRot.y - rot[1]) > 0.001 ||
+                         Math.abs(uiRot.z - rot[2]) > 0.001;
+      
+      const sclChanged = Math.abs(uiScl.x - scl[0]) > 0.001 ||
+                         Math.abs(uiScl.y - scl[1]) > 0.001 ||
+                         Math.abs(uiScl.z - scl[2]) > 0.001;
+      
+      // Only apply if user actually changed sliders
+      if (posChanged) {
+        selectedObj.transform.setPosition(uiPos.x, uiPos.y, uiPos.z);
       }
-      break;
+      
+      if (rotChanged) {
+        selectedObj.transform.setRotation(uiRot.x, uiRot.y, uiRot.z);
+      }
+      
+      if (sclChanged) {
+        selectedObj.transform.setScale(uiScl.x, uiScl.y, uiScl.z);
+      }
+    }
   }
 });
+
 
 console.log('UI controls created');
 

@@ -41,6 +41,19 @@ export interface ControlParams {
     mouseSensitivity: number;
     orbitSensitivity: number;
   };
+  objects: {
+    list: Array<{ id: string; name: string; type: string }>;
+    selectedId: string | null;
+    geometryTypeToAdd: string; // Geometry type for next added object
+    transform: {
+      position: { x: number; y: number; z: number };
+      rotation: { x: number; y: number; z: number };
+      scale: { x: number; y: number; z: number };
+    };
+    // Action flags (set by button clicks, cleared by main.ts)
+    addObjectRequested: boolean;
+    removeObjectRequested: boolean;
+  };
 }
 
 /**
@@ -61,6 +74,7 @@ export class SceneControls {
     this.setupAnimationControls();
     this.setupGeometryControls();
     this.setupControlsControls();
+    this.setupObjectManagementControls();
   }
 
   /**
@@ -336,6 +350,136 @@ export class SceneControls {
       });
 
     controlsFolder.open();
+  }
+
+  /**
+   * Setup object management controls folder
+   */
+  private setupObjectManagementControls(): void {
+    const objectsFolder = this.gui.addFolder('Objects');
+
+    // Object list dropdown (shows all scene objects)
+    const objectListControl = objectsFolder
+      .add(this.params.objects, 'selectedId', {})
+      .name('Select Object')
+      .onChange(() => this.triggerChange());
+
+    // Geometry type to add dropdown
+    objectsFolder
+      .add(this.params.objects, 'geometryTypeToAdd', [
+        'Cube',
+        'Sphere',
+        'Cylinder',
+        'Prism (Triangle)',
+        'Prism (Hexagon)'
+      ])
+      .name('🎨 Geometry Type')
+      .onChange(() => this.triggerChange());
+
+    // "Add Object" button
+    objectsFolder
+      .add({ 
+        addObject: () => { 
+          this.params.objects.addObjectRequested = true; 
+          this.triggerChange(); 
+        } 
+      }, 'addObject')
+      .name('➕ Add Object');
+
+    // "Remove Selected" button
+    objectsFolder
+      .add({ 
+        removeObject: () => { 
+          this.params.objects.removeObjectRequested = true; 
+          this.triggerChange(); 
+        } 
+      }, 'removeObject')
+      .name('🗑️ Remove Selected');
+
+    // Transform controls folder (only visible when object selected)
+    const transformFolder = objectsFolder.addFolder('Transform');
+
+    const positionFolder = transformFolder.addFolder('Position');
+    positionFolder
+      .add(this.params.objects.transform.position, 'x', -10, 10, 0.1)
+      .name('X')
+      .onChange(() => this.triggerChange());
+    positionFolder
+      .add(this.params.objects.transform.position, 'y', -10, 10, 0.1)
+      .name('Y')
+      .onChange(() => this.triggerChange());
+    positionFolder
+      .add(this.params.objects.transform.position, 'z', -10, 10, 0.1)
+      .name('Z')
+      .onChange(() => this.triggerChange());
+
+    const rotationFolder = transformFolder.addFolder('Rotation');
+    rotationFolder
+      .add(this.params.objects.transform.rotation, 'x', 0, 360, 1)
+      .name('X (degrees)')
+      .onChange(() => this.triggerChange());
+    rotationFolder
+      .add(this.params.objects.transform.rotation, 'y', 0, 360, 1)
+      .name('Y (degrees)')
+      .onChange(() => this.triggerChange());
+    rotationFolder
+      .add(this.params.objects.transform.rotation, 'z', 0, 360, 1)
+      .name('Z (degrees)')
+      .onChange(() => this.triggerChange());
+
+    const scaleFolder = transformFolder.addFolder('Scale');
+    scaleFolder
+      .add(this.params.objects.transform.scale, 'x', 0.1, 5, 0.1)
+      .name('X')
+      .onChange(() => this.triggerChange());
+    scaleFolder
+      .add(this.params.objects.transform.scale, 'y', 0.1, 5, 0.1)
+      .name('Y')
+      .onChange(() => this.triggerChange());
+    scaleFolder
+      .add(this.params.objects.transform.scale, 'z', 0.1, 5, 0.1)
+      .name('Z')
+      .onChange(() => this.triggerChange());
+
+    // Update dropdown options when object list changes
+    // Store reference to update dropdown later
+    (this as unknown as { objectListControl: typeof objectListControl }).objectListControl = objectListControl;
+
+    // Initially hide transform folder if no object selected
+    if (!this.params.objects.selectedId) {
+      transformFolder.close();
+      transformFolder.hide();
+    }
+
+    objectsFolder.open();
+  }
+
+  /**
+   * Update object list dropdown options
+   * Call this when objects are added/removed
+   */
+  updateObjectList(): void {
+    const objectListControl = (this as unknown as { objectListControl?: ReturnType<GUI['add']> }).objectListControl;
+    if (!objectListControl) return;
+
+    // Build options object from list
+    const options: Record<string, string> = {};
+    for (const obj of this.params.objects.list) {
+      options[obj.name] = obj.id;
+    }
+
+    // Update dropdown options
+    objectListControl.options(options);
+
+    // Show/hide transform folder based on selection
+    const transformFolder = this.gui.folders.find(f => f._title === 'Objects')?.folders.find(f => f._title === 'Transform');
+    if (transformFolder) {
+      if (this.params.objects.selectedId) {
+        transformFolder.show();
+      } else {
+        transformFolder.hide();
+      }
+    }
   }
 
   /**
