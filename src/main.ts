@@ -106,41 +106,18 @@ const tabSplit = document.getElementById('tab-split');
 import { TextureLoader } from './loaders/TextureLoader';
 import { OBJLoader } from './loaders/OBJLoader';
 
-// Load hat model
-let hatMesh: Mesh | null = null;
-OBJLoader.load(gl, '/models/model.obj').then(hatGeometry => {
-  const hatTransform = new Transform();
-  hatTransform.setPosition(3, 0, 0); // Position to the right of main cube
-  hatTransform.setScale(0.1, 0.1, 0.1); // Scale down significantly
-  hatMesh = new Mesh(hatGeometry, hatTransform);
-  
-  // Load and apply texture to hat
-  TextureLoader.load(gl, '/models/texture.png').then(hatTexture => {
-    if (hatMesh) {
-      hatMesh.setTexture(hatTexture);
-      scene.addObject('hat', hatMesh, hatTransform);
-      
-      // Update controls list
-      controls.params.objects.list.push({ id: 'hat', name: 'Hat Model', type: 'OBJ' });
-      controls.updateObjectList();
-      
-      console.log('Hat model loaded and added to scene');
-    }
-  }).catch(err => console.error('Failed to load hat texture:', err));
-}).catch(err => console.error('Failed to load hat model:', err));
-
-// Also load texture for existing meshes
-TextureLoader.load(gl, '/models/texture.png').then(texture => {
-  mesh.setTexture(texture);
-  satelliteMesh.setTexture(texture); // Use same texture for satellite
-  console.log('Texture applied to meshes');
-});
-
 // Object counter for unique naming
 let objectCounter = 2; // Start at 2 (main=0, satellite=1)
 
 // Track previous selected object to detect selection changes
 let previousSelectedId: string | null = null;
+
+// Create Game Camera (Fixed View) - MUST be before controls (referenced in onChange)
+const gameCamera = new Camera(60, typedCanvas.width / typedCanvas.height, 0.1, 100);
+gameCamera.setPosition(10, 10, 10);
+gameCamera.setTarget(0, 0, 0);
+console.log('Game Camera initialized');
+
 
 // Create UI controls
 const controls = new SceneControls({
@@ -205,6 +182,32 @@ const controls = new SceneControls({
 
 // Update object list dropdown after initialization
 controls.updateObjectList();
+
+// Load hat model (after controls initialization)
+let hatMesh: Mesh | null = null;
+void OBJLoader.load(gl, '/models/model.obj').then((hatGeometry) => {
+  const hatTransform = new Transform();
+  hatTransform.setPosition(3, 0, 0);
+  hatTransform.setScale(0.1, 0.1, 0.1);
+  hatMesh = new Mesh(hatGeometry, hatTransform);
+  
+  void TextureLoader.load(gl, '/models/texture.png').then((hatTexture) => {
+    if (hatMesh) {
+      hatMesh.setTexture(hatTexture);
+      scene.addObject('hat', hatMesh, hatTransform);
+      controls.params.objects.list.push({ id: 'hat', name: 'Hat Model', type: 'OBJ' });
+      controls.updateObjectList();
+      console.log('Hat model loaded and added to scene');
+    }
+  }).catch((err: unknown) => console.error('Failed to load hat texture:', err));
+}).catch((err: unknown) => console.error('Failed to load hat model:', err));
+
+// Also load texture for existing meshes
+void TextureLoader.load(gl, '/models/texture.png').then((texture) => {
+  mesh.setTexture(texture);
+  satelliteMesh.setTexture(texture);
+  console.log('Texture applied to meshes');
+});
 
 // FPS Controller (initially null)
 let fpsController: FirstPersonController | null = null;
@@ -552,12 +555,6 @@ controls.onChange(() => {
 
 
 console.log('UI controls created');
-
-// Create Game Camera (Fixed View) - MUST be after main camera
-const gameCamera = new Camera(60, typedCanvas.width / typedCanvas.height, 0.1, 100);
-gameCamera.setPosition(10, 10, 10);
-gameCamera.setTarget(0, 0, 0);
-console.log('Game Camera initialized');
 
 
 function resizeCanvas(): void {
